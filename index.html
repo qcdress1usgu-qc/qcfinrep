@@ -142,11 +142,11 @@
     <option value="AMERICAN EAGLE OUTFITTERS"><option value="ANN INC."><option value="BROOKS BROTHERS"><option value="CALVIN KLEIN">
     <option value="CARHARTT"><option value="CHICO'S"><option value="DILLARD'S/MURANO"><option value="DULUTH TRADING">
     <option value="EILEEN FISHER"><option value="GU"><option value="HUGO BOSS"><option value="J.CREW">
-    <option value="J.JILL"><option value="JMC"><option value="LL.BEAN"><option value="LEVI'S"><option value="LILLY PULITZER">
-    <option value="LULULEMON"><option value="MACY'S"><option value="PENGUIN"><option value="PERRY ELLIS">
-    <option value="POLO RALPH LAUREN"><option value="PVH"><option value="TAILORED BRANDS"><option value="TALBOTS">
-    <option value="TH NA"><option value="TOMMY BAHAMA"><option value="UNIQLO"><option value="VICTORIA'S SECRET"><option value="VINEYARD VINES">
-    <option value="WHBM">
+    <option value="J.JILL"><option value="JMC"><option value="LEVI'S"><option value="LILLY PULITZER">
+    <option value="LL.BEAN"><option value="LULULEMON"><option value="MACY'S"><option value="NIC & ZOE">
+    <option value="PENGUIN"><option value="PERRY ELLIS"><option value="POLO RALPH LAUREN"><option value="PVH">
+    <option value="TAILORED BRANDS"><option value="TALBOTS"><option value="TH NA"><option value="TOMMY BAHAMA">
+    <option value="UNIQLO"><option value="VICTORIA'S SECRET"><option value="VINEYARD VINES"><option value="WHBM">
 </datalist>
 
 <div class="header">
@@ -411,23 +411,24 @@
         document.getElementById('gridSuffix').innerHTML = sufHtml;
     }
 
-    const typeSewingGeneral = ["RUN OF STITCH", "BROKEN STITCH", "PLEATED", "SKIP STITCH", "MISSING", "SHADING", "STAIN", "PUCKERING", "FABRIC DEFECT", "TWIST/ROPPING/FULLNESS", "UNMATCH/HIGH LOW", "TRIMMING", "INCONSISTENT", "POORSHAPE/POINTED/EXPOSED"];
+    // ====== JENIS DEFECT SUDAH DIURUTKAN ABJAD (A-Z) ======
+    const typeSewingGeneral = ["BROKEN STITCH", "FABRIC DEFECT", "INCONSISTENT", "MISSING", "PLEATED", "POORSHAPE/POINTED/EXPOSED", "PUCKERING", "RUN OF STITCH", "SHADING", "SKIP STITCH", "STAIN", "TRIMMING", "TWIST/ROPPING/FULLNESS", "UNMATCH/HIGH LOW"];
     
     const defectMaster = {
         "SEWING": {
-            "COLLAR/NECK": typeSewingGeneral, "SHOULDER": typeSewingGeneral, "ARMHOLE": typeSewingGeneral,
-            "SLEEVE": typeSewingGeneral, "MANSET": typeSewingGeneral, "SLIT": typeSewingGeneral,
-            "BOTTOM HEMMING": typeSewingGeneral, "FRONT PLACKET": typeSewingGeneral, "SIDE SEAM": typeSewingGeneral,
-            "POCKET": typeSewingGeneral, "MAIN LABEL/CARE LABEL": typeSewingGeneral,
-            "FRONT BODY": typeSewingGeneral, "BACK BODY": typeSewingGeneral, "FRONT/BACK RISE": typeSewingGeneral,
-            "LINING": typeSewingGeneral, "DECORATIVE": typeSewingGeneral, "BUTTON": typeSewingGeneral,
-            "BUTTON HOLE": typeSewingGeneral, "BARTACK": typeSewingGeneral, "HANDMADE": typeSewingGeneral,
-            "STEAM/IRONING": typeSewingGeneral
+            "ARMHOLE": typeSewingGeneral, "BACK BODY": typeSewingGeneral, "BARTACK": typeSewingGeneral,
+            "BOTTOM HEMMING": typeSewingGeneral, "BUTTON": typeSewingGeneral, "BUTTON HOLE": typeSewingGeneral,
+            "COLLAR/NECK": typeSewingGeneral, "DECORATIVE": typeSewingGeneral, "FRONT BODY": typeSewingGeneral,
+            "FRONT PLACKET": typeSewingGeneral, "FRONT/BACK RISE": typeSewingGeneral, "HANDMADE": typeSewingGeneral,
+            "INSEAM/OUTSEAM": typeSewingGeneral, "LINING": typeSewingGeneral, "MAIN LABEL/CARE LABEL": typeSewingGeneral,
+            "MANSET": typeSewingGeneral, "OVERLOOK": typeSewingGeneral, "POCKET": typeSewingGeneral,
+            "SHOULDER": typeSewingGeneral, "SIDE SEAM": typeSewingGeneral, "SLEEVE": typeSewingGeneral,
+            "SLIT": typeSewingGeneral, "STEAM/IRONING": typeSewingGeneral, "WAIST": typeSewingGeneral
         },
         "FINISHING": {
-            "IRONING": ["CREASEMARK", "SHINING", "EXPOSED"], "BUTTON": ["MISSING", "BROKEN"], "BUTTON HOLE": ["BROKEN"],
-            "HAND MADE": ["BROKEN", "MISSING"], "STAIN": ["LINGKUNGAN", "OIL"], "TRIMMING": ["-"],
-            "WEAVING": ["YARNPULL", "SLUB"], "SHADING": ["-"], "SIZE SPEC": ["-"], "OTHER": ["-"]
+            "BUTTON": ["BROKEN", "MISSING"], "BUTTON HOLE": ["BROKEN"], "HAND MADE": ["BROKEN", "MISSING"],
+            "IRONING": ["CREASEMARK", "EXPOSED", "SHINING"], "OTHER": ["-"], "SHADING": ["-"],
+            "SIZE SPEC": ["-"], "STAIN": ["LINGKUNGAN", "OIL"], "TRIMMING": ["-"], "WEAVING": ["SLUB", "YARNPULL"]
         }
     };
 
@@ -444,7 +445,10 @@
     function populateArea() {
         const selArea = document.getElementById('sel_area');
         selArea.innerHTML = '<option value="" disabled selected>-- Pilih Area --</option>';
-        Object.keys(defectMaster[currentCategory]).forEach(area => { selArea.innerHTML += `<option value="${area}">${area}</option>`; });
+        // Diurutkan secara dinamis dengan .sort()
+        Object.keys(defectMaster[currentCategory]).sort().forEach(area => { 
+            selArea.innerHTML += `<option value="${area}">${area}</option>`; 
+        });
         document.getElementById('sel_type').innerHTML = '<option value="" disabled selected>-- Pilih Jenis --</option>';
     }
 
@@ -454,7 +458,8 @@
         selType.innerHTML = '<option value="" disabled selected>-- Pilih Jenis --</option>';
         
         if(area && defectMaster[currentCategory][area]) {
-            const types = defectMaster[currentCategory][area];
+            // Diurutkan secara dinamis dengan .sort()
+            const types = [...defectMaster[currentCategory][area]].sort();
             if(types.length === 1 && types[0] === "-") {
                 selType.innerHTML = '<option value="-">TIDAK ADA SUB-JENIS</option>';
                 selType.value = "-";
