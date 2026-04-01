@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>USGU DRESS 1 QC FINISHING DASHBOARD</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    
+    <style>
+        :root { 
+            --bg-body: #f8fafc; --bg-card: #ffffff; --bg-input: #f1f5f9; --bg-readonly: #e2e8f0;
+            --bg-section: #f1f5f9; --bg-stepper: #e2e8f0; 
+            --text-main: #334155; --text-sub: #64748b; --text-brand: #0f172a; 
+            --border-line: #cbd5e1; --border-focus: #4338ca;
+            --primary: #4338ca; --primary-grad: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+            --accent: #ea580c; --success: #10b981; --danger: #ef4444; 
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.1); --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.1); --shadow-btn: 0 4px 14px 0 rgba(67, 56, 202, 0.3);
+        }
+        .dark-mode {
+            --bg-body: #0f172a; --bg-card: #1e293b; --bg-input: #334155; --bg-readonly: #1e293b;
+            --bg-section: #1e293b; --bg-stepper: #334155; 
+            --text-main: #f8fafc; --text-sub: #94a3b8; --text-brand: #ffffff; 
+            --border-line: #475569; --border-focus: #818cf8;
+            --primary: #6366f1; --primary-grad: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            --accent: #f97316; --success: #34d399; --danger: #f87171;
+        }
+
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-body); margin: 0; padding-bottom: 140px; font-size: 14px; color: var(--text-main); transition: background-color 0.3s, color 0.3s; user-select: none; -webkit-user-select: none; }
+        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        .header { background: var(--bg-card); border-bottom: 3px solid var(--primary); box-shadow: var(--shadow-md); padding: 20px 15px; transition: background-color 0.3s; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 800px; margin: 0 auto; }
+        .title-area { display: flex; flex-direction: column; cursor: pointer; }
+        .main-title { font-weight: 900; color: var(--text-brand); font-size: 1.3rem; letter-spacing: 1px; }
+        .sub-title { font-size: 10px; color: var(--text-sub); font-weight: bold; letter-spacing: 1.5px; margin-top: 4px; }
+        .version-badge { background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; margin-left: 6px; font-weight: 900;}
+        .theme-toggle { background: var(--bg-body); border: 1px solid var(--border-line); color: var(--text-main); border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 800; display: flex; justify-content: center; align-items: center; cursor: pointer; outline: none; box-shadow: var(--shadow-sm); transition: all 0.2s; letter-spacing: 1px;}
+        
+        .container { padding: 15px; max-width: 800px; margin: 0 auto; }
+        .card { background: var(--bg-card); border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-line); }
+        .input-group { margin-bottom: 16px; position: relative; }
+        label { display: block; font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .req::after { content: " *"; color: var(--danger); font-size: 14px;}
+        input, textarea, select { width: 100%; padding: 14px 12px; border: 1px solid var(--border-line); border-radius: 6px; box-sizing: border-box; font-size: 14px; font-weight: 600; background: var(--bg-input); color: var(--text-main); font-family: inherit;}
+        input:focus, textarea:focus, select:focus { border-color: var(--border-focus); outline: none; box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.15); }
+        
+        input[readonly].clickable { cursor: pointer; background: var(--bg-input); border-style: solid; color: var(--primary); text-align: center; font-size: 16px; }
+        input[readonly]:not(.clickable) { background: var(--bg-readonly); font-weight: bold; color: var(--danger); cursor: not-allowed; border-style: dashed; }
+        
+        .btn-time { position: absolute; right: 6px; top: 27px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border-line); border-radius: 4px; padding: 6px 12px; font-size: 10px; font-weight: bold; cursor: pointer; box-shadow: var(--shadow-sm);}
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .shift-container { display: flex; align-items: center; gap: 8px; }
+        .shift-container input[type="time"] { flex: 1; padding: 12px 10px; text-align: center; }
+        .shift-divider { font-weight: 900; color: var(--text-sub); }
+
+        .category-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-section); padding: 6px; border-radius: 8px; border: 1px solid var(--border-line); }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 6px; font-weight: 800; font-size: 12px; color: var(--text-sub); cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; box-shadow: var(--shadow-sm); }
+        
+        .btn-add { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%; font-size: 13px; letter-spacing: 0.5px; box-shadow: var(--shadow-sm);}
+        .empty-state { text-align: center; padding: 20px; color: var(--text-sub); font-size: 12px; font-weight: bold; border: 2px dashed var(--border-line); border-radius: 8px; background: var(--bg-section);}
+        
+        .summary-card { background: var(--bg-section); border: 1px solid var(--border-line); border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;}
+        .summary-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-line); padding-bottom: 10px; }
+        .summary-title { font-size: 14px; font-weight: 900; color: var(--primary); display: flex; flex-direction: column;}
+        .summary-subtitle { font-size: 11px; color: var(--text-main); font-weight: 700; margin-top: 3px; letter-spacing: 0.5px;}
+        .btn-del { background: var(--bg-card); color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 900; font-size: 12px;}
+
+        .flex-inputs { display: flex; gap: 12px; width: 100%; }
+        .stepper { display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-line); border-radius: 6px; overflow: hidden; flex: 1; }
+        .stepper button { background: var(--bg-stepper); border: none; width: 45px; height: 40px; font-size: 20px; font-weight: bold; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .stepper input { flex: 1; min-width: 0; border: none; text-align: center; font-weight: 900; padding: 0; height: 40px; color: var(--text-brand); background: transparent; }
+        .stepper input::placeholder { color: var(--text-sub); font-weight: bold; opacity: 0.7; }
+        .stepper input:focus { box-shadow: none; }
+
+        .fab-container { position: fixed; right: 15px; bottom: 130px; display: flex; flex-direction: column; gap: 12px; z-index: 999; align-items: flex-end; }
+        .fab-sync { background: var(--danger); color: white; border: none; border-radius: 8px; width: auto; padding: 10px 16px; font-weight: 800; font-size: 11px; display: none; letter-spacing: 0.5px; box-shadow: var(--shadow-md);}
+
+        .action-buttons { position: fixed; bottom: 15px; left: 15px; right: 15px; max-width: 770px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
+        .row-btns { display: flex; gap: 10px; }
+        .btn-action { flex: 1; border: none; padding: 12px 5px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12px; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; letter-spacing: 0.5px;}
+        .btn-server { background: var(--primary-grad); box-shadow: var(--shadow-btn); font-size: 14px; width: 100%; padding: 14px;}
+        .btn-xl { background: var(--bg-card); color: var(--text-brand); border: 1px solid var(--border-line); box-shadow: var(--shadow-sm);}
+        .btn-reset { background: var(--bg-card); color: var(--danger); border: 1px solid var(--danger); box-shadow: var(--shadow-sm);}
+        .btn-spv { background: #1e293b; color: #f8fafc; border: 1px solid #0f172a; box-shadow: var(--shadow-sm);}
+
+        #loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); color: white; z-index: 2000; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; flex-direction: column; text-align: center; backdrop-filter: blur(4px); letter-spacing: 1px;}
+        .spinner { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Area Chart Khusus Finishing */
+        .chart-container { display: flex; align-items: center; justify-content: center; gap: 20px; background: var(--bg-section); padding: 20px; border-radius: 8px; border: 1px solid var(--border-line); margin-bottom: 20px; }
+        .chart-box { width: 110px; height: 110px; position: relative; }
+        .chart-details { display: flex; flex-direction: column; gap: 4px; }
+        .chart-title { font-size: 11px; font-weight: 900; color: var(--text-sub); letter-spacing: 1px; }
+        .chart-pct { font-size: 26px; font-weight: 900; color: var(--danger); margin-bottom: 5px;}
+        .chart-legend { font-size: 12px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 6px;}
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block;}
+
+        /* --- STYLING MODAL KEYPAD LINE --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.85); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-box { background: var(--bg-card); width: 90%; max-width: 400px; border-radius: 12px; padding: 20px; box-shadow: var(--shadow-md); display: flex; flex-direction: column; gap: 15px; }
+        .modal-title { font-weight: 900; color: var(--primary); font-size: 16px; text-align: center; border-bottom: 2px solid var(--border-line); padding-bottom: 10px;}
+        .line-tags { display: flex; flex-wrap: wrap; gap: 8px; min-height: 45px; padding: 10px; background: var(--bg-input); border-radius: 8px; border: 1px dashed var(--border-line); align-items: center;}
+        .line-tag { background: var(--primary); color: white; padding: 6px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px;}
+        .line-tag span { cursor: pointer; color: #ffb3b3; font-weight: 900; padding: 0 4px;}
+        
+        .grid-numbers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+        .num-btn { background: var(--bg-section); border: 1px solid var(--border-line); padding: 12px 0; border-radius: 6px; font-weight: 900; color: var(--text-main); cursor: pointer; font-size: 14px;}
+        .num-btn.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.2); }
+        
+        .grid-suffix { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px; }
+        .suf-btn { background: var(--bg-section); border: 1px solid var(--border-line); padding: 12px; border-radius: 6px; font-weight: 900; color: var(--text-main); cursor: pointer; font-size: 13px;}
+        .suf-btn.selected { background: var(--accent); color: white; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2); }
+        
+        .btn-add-line { background: var(--bg-input); color: var(--primary); border: 2px solid var(--primary); padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; flex: 1;}
+        .btn-save-line { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 900; cursor: pointer; flex: 2;}
+    </style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><div id="loading-text">MEMPROSES...</div></div>
+
+<datalist id="qcList">
+    <option value="AGMEL"><option value="AGNA"><option value="ANGELIA">
+    <option value="ANISA"><option value="ARINI"><option value="AVI">
+    <option value="BIANCA"><option value="BUNGA"><option value="CIKA">
+    <option value="ELLEN"><option value="FAZA"><option value="ITA">
+    <option value="JANAH"><option value="LAULA"><option value="LINTANG">
+    <option value="MASTUTI"><option value="MELA"><option value="NEHA">
+    <option value="NINGZAH"><option value="NUR C"><option value="SHINE">
+    <option value="SULU"><option value="SUSI"><option value="TIARA">
+    <option value="TRISNI"><option value="WIDYA">
+</datalist>
+
+<datalist id="buyerList">
+    <option value="AMERICAN EAGLE OUTFITTERS"><option value="ANN INC."><option value="BROOKS BROTHERS">
+    <option value="CARHARTT"><option value="CHICO'S"><option value="DILLARD'S"><option value="DULUTH TRADING">
+    <option value="EILEEN FISHER"><option value="GU"><option value="HUGO BOSS"><option value="J.CREW">
+    <option value="J.JILL"><option value="L.L.BEAN"><option value="LEVI'S"><option value="LILLY PULITZER">
+    <option value="LULULEMON"><option value="MACY'S"><option value="PENGUIN"><option value="PERRY ELLIS">
+    <option value="POLO RALPH LAUREN"><option value="PVH"><option value="TAILORED BRANDS"><option value="TALBOTS">
+    <option value="TH NA"><option value="TOMMY BAHAMA"><option value="UNIQLO"><option value="VINEYARD VINES">
+    <option value="WHBM">
+</datalist>
+
+<div class="header">
+    <div class="header-content">
+        <div class="title-area" onclick="triggerEasterEgg()">
+            <div class="main-title">QC FINISHING DASHBOARD</div>
+            <div class="sub-title">USGU DRESS 1 <span class="version-badge" id="verBadge">v1.1</span></div>
+        </div>
+        <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">DARK</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <div class="grid">
+            <div class="input-group">
+                <label class="req">NAMA QC / INSPECTOR:</label>
+                <input type="text" id="nama_qc" list="qcList" placeholder="Ketik atau Pilih QC" oninput="saveData()">
+            </div>
+            <div class="input-group">
+                <label class="req">SPECIAL PROCESS:</label>
+                <select id="special_process" onchange="saveData()">
+                    <option value="" disabled selected>-- Pilih --</option>
+                    <option value="NON WASHING">NON WASHING</option>
+                    <option value="WASHING">WASHING</option>
+                </select>
+            </div>
+            
+            <div class="input-group"><label class="req">TANGGAL:</label><input type="date" id="tanggal" onchange="saveData()"></div>
+            <div class="input-group">
+                <label>JAM UPDATE:</label>
+                <input type="text" id="jam" placeholder="Cth: 15.30" oninput="saveData()">
+                <button class="btn-time" onclick="setNow()">SEKARANG</button>
+            </div>
+            
+            <div class="input-group"><label class="req">ORDER/BUYER:</label><input type="text" id="buyer" list="buyerList" placeholder="Pilih Buyer" oninput="saveData()"></div>
+            
+            <div class="input-group">
+                <label class="req">NAMA LINE:</label>
+                <input type="text" id="line_name" class="clickable" placeholder="Ketuk Pilih Line" readonly onclick="openLineModal()">
+            </div>
+            
+            <div class="input-group"><label class="req">STYLE:</label><input type="text" id="style" placeholder="Cth: 450211" oninput="saveData()"></div>
+            <div class="input-group"><label class="req">COLOR:</label><input type="text" id="color" placeholder="Cth: RED" oninput="saveData()"></div>
+
+            <div class="input-group">
+                <label class="req">SHIFT: <span id="shift_hours" style="color:var(--primary); font-weight:900;"></span></label>
+                <div class="shift-container">
+                    <input type="time" id="shift_start" oninput="calculateShiftHours(); saveData()">
+                    <span class="shift-divider">-</span>
+                    <input type="time" id="shift_end" oninput="calculateShiftHours(); saveData()">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>JAM ISTIRAHAT:</label>
+                <select id="jam_istirahat" onchange="saveData()">
+                    <option value="0" selected>0 Menit (Tanpa Istirahat)</option>
+                    <option value="30">30 Menit</option>
+                    <option value="60">60 Menit</option>
+                    <option value="90">90 Menit</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="add-defect-section">
+        <label style="border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-bottom: 15px; font-size: 12px; color: var(--primary); font-weight: 800;">TAMBAH DEFECT BARU:</label>
+        
+        <div class="category-tabs">
+            <button class="tab-btn active" id="tab_sewing" onclick="switchCategory('SEWING')">SEWING</button>
+            <button class="tab-btn" id="tab_finishing" onclick="switchCategory('FINISHING')">FINISHING</button>
+        </div>
+
+        <div class="grid">
+            <div class="input-group">
+                <label>1. PILIH AREA / PROSES:</label>
+                <select id="sel_area" onchange="populateType()">
+                    <option value="" disabled selected>-- Pilih Area --</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>2. PILIH JENIS DEFECT:</label>
+                <select id="sel_type">
+                    <option value="" disabled selected>-- Pilih Jenis --</option>
+                </select>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-add" style="flex: 3;" onclick="addDefectToList()">TAMBAHKAN</button>
+        </div>
+    </div>
+
+    <div class="card" id="summary-section">
+        <label style="border-bottom: 2px solid var(--accent); padding-bottom: 8px; margin-bottom: 15px; font-size: 12px; color: var(--accent); font-weight: 800;">DAFTAR RANGKUMAN DEFECT:</label>
+        <div id="active_defects_container">
+            <div class="empty-state" id="empty_state">
+                BELUM ADA DEFECT YANG DITAMBAHKAN.<br>
+                <span style="font-weight:normal; font-size:11px;">Silakan pilih Area & Jenis di atas lalu klik Tambahkan.</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="kalkulasi-section">
+        <label style="border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-bottom: 15px; font-size: 12px; color: var(--primary); font-weight: 800;">KALKULASI (OTOMATIS & MANUAL):</label>
+        
+        <div class="chart-container">
+            <div class="chart-box">
+                <canvas id="defectChart"></canvas>
+            </div>
+            <div class="chart-details">
+                <div class="chart-title">DEFECT RATE</div>
+                <div class="chart-pct" id="chart_pct">0%</div>
+                <div class="chart-legend"><span class="legend-dot" style="background:var(--success);"></span> GOOD : <span id="chart_good">0 (0%)</span></div>
+                <div class="chart-legend"><span class="legend-dot" style="background:var(--danger);"></span> DEFECT : <span id="chart_def">0</span></div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="input-group" style="grid-column: span 2;">
+                <label class="req" style="color:var(--success);">QTY GOOD QC (TOTAL LULUS):</label>
+                <input type="number" id="qty_good" oninput="formatAntiMinus(this); calculate()" placeholder="Isi Total Good" style="text-align: center; font-size: 18px; padding: 18px; color: var(--success);">
+            </div>
+            
+            <input type="hidden" id="tot_def" value="0">
+            <input type="hidden" id="qty_insp" value="0">
+            <input type="hidden" id="pct_def" value="0%">
+        </div>
+    </div>
+</div>
+
+<div class="fab-container">
+    <button class="fab-sync" id="btnSync" onclick="pushOfflineData()">SINKRON (0)</button>
+</div>
+
+<div class="action-buttons">
+    <button class="btn-action btn-server" id="btnSubmitMain" onclick="showSummaryAndSubmit()">CONFIRM & SUBMIT</button>
+    <div class="row-btns">
+        <button class="btn-action btn-reset" onclick="resetForm()">RESET</button>
+        <button class="btn-action btn-xl" onclick="exportToExcel()">EXCEL</button>
+        <button class="btn-action btn-spv" onclick="recapSPV()">🔐 TUTUP SHIFT</button>
+    </div>
+</div>
+
+<div id="lineModal" class="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-title">PILIH NAMA LINE</div>
+        <div class="line-tags" id="lineTags"></div>
+        <label style="margin-top:10px;">1. PILIH ANGKA:</label>
+        <div class="grid-numbers" id="gridNumbers"></div>
+        <label style="margin-top:10px;">2. TAMBAHAN HURUF (JIKA ADA):</label>
+        <div class="grid-suffix" id="gridSuffix"></div>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-add-line" onclick="addLineToTag()">+ TAMBAH</button>
+            <button class="btn-save-line" onclick="closeLineModal()">SIMPAN & TUTUP</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('contextmenu', event => event.preventDefault()); 
+
+    // ==== GANTI DENGAN URL WEB APP BARU ====
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiwr2m82nWXxX2GLwR6euU7CEVRUjRcQvIwYL6ortrTzGZ6A38aeagzwyNgR_jnyA/exec"; 
+    
+    // ==== VERSI APLIKASI DIUBAH MENJADI 1.1 ====
+    const APP_VERSION = "1.1"; 
+    document.getElementById('verBadge').innerText = "v" + APP_VERSION;
+
+    let defectChart; 
+
+    function toggleTheme() { 
+        document.body.classList.toggle('dark-mode'); 
+        document.getElementById('themeBtn').innerText = document.body.classList.contains('dark-mode') ? 'LIGHT' : 'DARK'; 
+        localStorage.setItem('darkMode_fin', document.body.classList.contains('dark-mode')); 
+    }
+    function setDefaultDate() { const d = new Date(); document.getElementById('tanggal').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+    function setNow() { const d = new Date(); document.getElementById('jam').value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; saveData(); }
+    function formatAntiMinus(input) { input.value = input.value.replace(/[^0-9]/g, ''); }
+
+    function calculateShiftHours() {
+        let start = document.getElementById('shift_start').value;
+        let end = document.getElementById('shift_end').value;
+        let displaySpan = document.getElementById('shift_hours');
+        
+        if(start && end) {
+            let t1 = start.split(":");
+            let t2 = end.split(":");
+            let d1 = new Date(2000, 0, 1, t1[0], t1[1]); 
+            let d2 = new Date(2000, 0, 1, t2[0], t2[1]);
+            
+            if(d2 < d1) d2.setDate(d2.getDate() + 1); 
+            
+            let diff = (d2 - d1) / (1000 * 60 * 60);
+            let hours = Math.floor(diff);
+            let mins = Math.round((diff % 1) * 60);
+            
+            displaySpan.innerText = `(${hours} Jam ${mins > 0 ? mins + ' Menit' : ''})`;
+        } else { 
+            displaySpan.innerText = ""; 
+        }
+    }
+
+    // ========================================================
+    // LOGIKA KEYPAD MODAL LINE
+    // ========================================================
+    let selectedNum = "";
+    let selectedSuf = "";
+    let selectedLines = [];
+
+    function openLineModal() {
+        let cur = document.getElementById('line_name').value;
+        selectedLines = cur ? cur.split(',').map(x => x.trim()).filter(x => x) : [];
+        selectedNum = ""; 
+        selectedSuf = "";
+        renderLineModal();
+        document.getElementById('lineModal').style.display = 'flex';
+    }
+
+    function closeLineModal() {
+        if (selectedNum !== "") {
+            let newLine = selectedNum + selectedSuf;
+            if(!selectedLines.includes(newLine)) selectedLines.push(newLine);
+        }
+        document.getElementById('lineModal').style.display = 'none';
+        document.getElementById('line_name').value = selectedLines.join(', ');
+        saveData();
+    }
+
+    function pickNum(n) { selectedNum = n; renderLineModal(); }
+    function pickSuf(s) { selectedSuf = s; renderLineModal(); }
+    
+    function addLineToTag() {
+        if(!selectedNum) { Swal.fire('Perhatian','Pilih angka line terlebih dahulu!','warning'); return; }
+        let newLine = selectedNum + selectedSuf;
+        if(!selectedLines.includes(newLine)) selectedLines.push(newLine);
+        selectedNum = ""; selectedSuf = ""; renderLineModal();
+    }
+    
+    function removeLineTag(line) {
+        selectedLines = selectedLines.filter(x => x !== line);
+        renderLineModal();
+    }
+
+    function renderLineModal() {
+        let tagsHtml = selectedLines.map(l => `<div class="line-tag">${l} <span onclick="removeLineTag('${l}'); event.stopPropagation();">✖</span></div>`).join('');
+        if(!tagsHtml) tagsHtml = `<span style="color:var(--text-sub); font-size:11px; margin:auto;">Pilih angka di bawah...</span>`;
+        document.getElementById('lineTags').innerHTML = tagsHtml;
+
+        let numsHtml = "";
+        for(let i = 1; i <= 20; i++) {
+            let selClass = (selectedNum == i) ? 'selected' : '';
+            numsHtml += `<button class="num-btn ${selClass}" onclick="pickNum('${i}')">${i}</button>`;
+        }
+        document.getElementById('gridNumbers').innerHTML = numsHtml;
+
+        let sufs = [ {val: "", label: "ANGKA SAJA"}, {val: "A", label: "A"}, {val: "B", label: "B"} ];
+        let sufHtml = sufs.map(s => {
+            let selClass = (selectedSuf === s.val) ? 'selected' : '';
+            return `<button class="suf-btn ${selClass}" onclick="pickSuf('${s.val}')">${s.label}</button>`;
+        }).join('');
+        document.getElementById('gridSuffix').innerHTML = sufHtml;
+    }
+
+    const typeSewingGeneral = ["RUN OF STITCH", "BROKEN STITCH", "PLEATED", "SKIP STITCH", "MISSING", "SHADING", "STAIN", "PUCKERING", "FABRIC DEFECT", "TWIST/ROPPING/FULLNESS", "UNMATCH/HIGH LOW", "TRIMMING", "INCONSISTENT", "POORSHAPE/POINTED/EXPOSED"];
+    
+    const defectMaster = {
+        "SEWING": {
+            "COLLAR/NECK": typeSewingGeneral, "SHOULDER": typeSewingGeneral, "ARMHOLE": typeSewingGeneral,
+            "SLEEVE": typeSewingGeneral, "MANSET": typeSewingGeneral, "SLIT": typeSewingGeneral,
+            "BOTTOM HEMMING": typeSewingGeneral, "FRONT PLACKET": typeSewingGeneral, "SIDE SEAM": typeSewingGeneral,
+            "POCKET": typeSewingGeneral, "MAIN LABEL/CARE LABEL": typeSewingGeneral,
+            "FRONT BODY": typeSewingGeneral, "BACK BODY": typeSewingGeneral, "FRONT/BACK RISE": typeSewingGeneral,
+            "LINING": typeSewingGeneral, "DECORATIVE": typeSewingGeneral, "BUTTON": typeSewingGeneral,
+            "BUTTON HOLE": typeSewingGeneral, "BARTACK": typeSewingGeneral, "HANDMADE": typeSewingGeneral,
+            "STEAM/IRONING": typeSewingGeneral
+        },
+        "FINISHING": {
+            "IRONING": ["CREASEMARK", "SHINING", "EXPOSED"], "BUTTON": ["MISSING", "BROKEN"], "BUTTON HOLE": ["BROKEN"],
+            "HAND MADE": ["BROKEN", "MISSING"], "STAIN": ["LINGKUNGAN", "OIL"], "TRIMMING": ["-"],
+            "WEAVING": ["YARNPULL", "SLUB"], "SHADING": ["-"], "SIZE SPEC": ["-"], "OTHER": ["-"]
+        }
+    };
+
+    let activeDefects = {}; 
+    let currentCategory = "SEWING";
+
+    function switchCategory(cat) {
+        currentCategory = cat;
+        document.getElementById('tab_sewing').classList.toggle('active', cat === 'SEWING');
+        document.getElementById('tab_finishing').classList.toggle('active', cat === 'FINISHING');
+        populateArea();
+    }
+
+    function populateArea() {
+        const selArea = document.getElementById('sel_area');
+        selArea.innerHTML = '<option value="" disabled selected>-- Pilih Area --</option>';
+        Object.keys(defectMaster[currentCategory]).forEach(area => { selArea.innerHTML += `<option value="${area}">${area}</option>`; });
+        document.getElementById('sel_type').innerHTML = '<option value="" disabled selected>-- Pilih Jenis --</option>';
+    }
+
+    function populateType() {
+        const area = document.getElementById('sel_area').value;
+        const selType = document.getElementById('sel_type');
+        selType.innerHTML = '<option value="" disabled selected>-- Pilih Jenis --</option>';
+        
+        if(area && defectMaster[currentCategory][area]) {
+            const types = defectMaster[currentCategory][area];
+            if(types.length === 1 && types[0] === "-") {
+                selType.innerHTML = '<option value="-">TIDAK ADA SUB-JENIS</option>';
+                selType.value = "-";
+            } else {
+                types.forEach(type => { selType.innerHTML += `<option value="${type}">${type}</option>`; });
+                if(types.length === 1) selType.value = types[0];
+            }
+        }
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('defectChart').getContext('2d');
+        defectChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: ['Good', 'Defect'], datasets: [{ data: [1, 0], backgroundColor: ['#cbd5e1', '#ef4444'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+        });
+    }
+
+    function addDefectToList() {
+        let area = document.getElementById('sel_area').value;
+        let type = document.getElementById('sel_type').value;
+        
+        if(!area || !type) { Swal.fire('Perhatian', 'Pilih Area dan Jenis Defect terlebih dahulu.', 'warning'); return; }
+
+        let key = `${currentCategory}_${area}_${type}`;
+        if(activeDefects[key]) { Swal.fire('Info', 'Defect ini sudah ada di daftar.', 'info'); return; }
+
+        activeDefects[key] = { cat: currentCategory, area: area, type: type, qty: "" };
+        document.getElementById('sel_area').value = ""; document.getElementById('sel_type').value = "";
+        
+        renderDefectList();
+        if (window.navigator && window.navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function renderDefectList() {
+        let container = document.getElementById('active_defects_container');
+        let html = ""; let count = 0;
+
+        for(let key in activeDefects) {
+            count++; let item = activeDefects[key];
+            let typeSubtitle = item.type === "-" ? "" : `<span class="summary-subtitle">↳ ${item.type}</span>`;
+            html += `
+            <div class="summary-card" id="card_${key}">
+                <div class="summary-header">
+                    <div class="summary-title"><span>${item.area}</span>${typeSubtitle}</div>
+                    <button class="btn-del" onclick="removeDefect('${key}')">X</button>
+                </div>
+                <div class="flex-inputs">
+                    <div class="stepper" style="width: 100%;">
+                        <button onclick="adjVal('${key}', -1)">-</button>
+                        <input type="number" id="inp_qty_${key}" value="${item.qty}" oninput="manualInput('${key}', this.value)" placeholder="MASUKKAN QTY">
+                        <button onclick="adjVal('${key}', 1)">+</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        if(count === 0) container.innerHTML = `<div class="empty-state" id="empty_state">BELUM ADA DEFECT YANG DITAMBAHKAN.<br><span style="font-weight:normal; font-size:11px;">Silakan pilih Area & Jenis di atas lalu klik Tambahkan.</span></div>`;
+        else container.innerHTML = html;
+        calculate();
+    }
+
+    function adjVal(key, amount) {
+        let val = parseInt(activeDefects[key].qty) || 0;
+        let newVal = val + amount;
+        activeDefects[key].qty = newVal > 0 ? newVal : "";
+        document.getElementById(`inp_qty_${key}`).value = newVal > 0 ? newVal : "";
+        if (window.navigator && window.navigator.vibrate) navigator.vibrate(40); 
+        calculate();
+    }
+
+    function manualInput(key, value) {
+        let num = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+        activeDefects[key].qty = num > 0 ? num : "";
+        document.getElementById(`inp_qty_${key}`).value = num > 0 ? num : "";
+        calculate();
+    }
+
+    function removeDefect(key) { delete activeDefects[key]; renderDefectList(); }
+
+    // ====== LOGIKA PERHITUNGAN BARU ======
+    function calculate() {
+        let totalDefect = 0;
+        for(let key in activeDefects) { totalDefect += parseInt(activeDefects[key].qty) || 0; }
+        
+        // Simpan total defect ke field tersembunyi
+        document.getElementById('tot_def').value = totalDefect;
+
+        // Ambil nilai Good (karena inputnya sekarang QTY GOOD)
+        const qtyGood = parseInt(document.getElementById('qty_good').value) || 0;
+        
+        // Perhitungan: Total Inspect = Good + Defect
+        const qtyInsp = qtyGood + totalDefect;
+        
+        let defPctStr = "0%", goodPctStr = "0%";
+        
+        if (qtyInsp > 0) {
+            defPctStr = ((totalDefect / qtyInsp) * 100).toFixed(1) + "%";
+            goodPctStr = ((qtyGood / qtyInsp) * 100).toFixed(1) + "%";
+            
+            // Simpan nilai untuk Payload (Export & Server)
+            document.getElementById('qty_insp').value = qtyInsp;
+            document.getElementById('pct_def').value = defPctStr;
+        } else {
+            document.getElementById('qty_insp').value = 0;
+            document.getElementById('pct_def').value = "0%";
+        }
+
+        // --- UPDATE LIVE CHART ---
+        document.getElementById('chart_good').innerText = `${qtyGood} (${goodPctStr})`;
+        document.getElementById('chart_def').innerText = totalDefect;
+        let pctLabel = document.getElementById('chart_pct');
+        
+        if (qtyInsp === 0) {
+            pctLabel.innerText = "0%"; pctLabel.style.color = "var(--text-sub)";
+            if(defectChart) { defectChart.data.datasets[0].data = [1, 0]; defectChart.data.datasets[0].backgroundColor = ['#cbd5e1', '#ef4444']; defectChart.update(); }
+        } else {
+            pctLabel.innerText = defPctStr; pctLabel.style.color = totalDefect > 0 ? "var(--danger)" : "var(--success)";
+            if(defectChart) { defectChart.data.datasets[0].data = [qtyGood, totalDefect]; defectChart.data.datasets[0].backgroundColor = ['#10b981', '#ef4444']; defectChart.update(); }
+        }
+        
+        saveData(); 
+    }
+
+    function saveData() { 
+        const data = {}; 
+        document.querySelectorAll('input, textarea, select').forEach(input => { 
+            if(input.id && !input.readOnly && !input.id.startsWith('inp_')) data[input.id] = input.value; 
+        }); 
+        localStorage.setItem('qcActiveDefects_fin', JSON.stringify(activeDefects));
+        localStorage.setItem('qcAutoSave3_fin', JSON.stringify(data)); 
+    }
+    
+    function loadData() { 
+        populateArea(); initChart();
+        const saved = localStorage.getItem('qcAutoSave3_fin'); 
+        const savedDefects = localStorage.getItem('qcActiveDefects_fin');
+        
+        if(savedDefects) { activeDefects = JSON.parse(savedDefects); renderDefectList(); }
+        if(saved) { 
+            const data = JSON.parse(saved); 
+            document.querySelectorAll('input, textarea, select').forEach(input => { 
+                if(data[input.id] !== undefined) input.value = data[input.id]; 
+            }); 
+            calculateShiftHours(); calculate(); 
+        } else { setDefaultDate(); } 
+        
+        if(localStorage.getItem('darkMode_fin') === 'true') { document.body.classList.add('dark-mode'); document.getElementById('themeBtn').innerText = 'LIGHT';} 
+        checkOfflineBadge();
+    }
+    
+    function resetForm() {
+        Swal.fire({
+            title: 'Hapus Semua Formulir?', text: "Data akan dibersihkan.", icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#dc2626', cancelButtonColor: '#64748b', confirmButtonText: 'Ya, Bersihkan!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                activeDefects = {}; renderDefectList();
+                // qty_insp diganti qty_good
+                ['line_name','buyer','style','color','special_process','shift_start','shift_end','jam_istirahat','qty_good'].forEach(id => { document.getElementById(id).value = ""; });
+                document.getElementById('shift_hours').innerText = ""; calculate(); saveData();
+                Swal.fire('Bersih!', 'Form sudah di-reset.', 'success');
+            }
+        });
+    }
+
+    window.onload = loadData;
+
+    function recapSPV() {
+        Swal.fire({
+            title: 'TUTUP REKAP HARIAN',
+            text: 'Masukkan Password SPV:',
+            input: 'password',
+            inputPlaceholder: 'Password',
+            showCancelButton: true,
+            confirmButtonColor: '#0f172a',
+            confirmButtonText: 'KIRIM',
+            cancelButtonText: 'BATAL'
+        }).then((result) => {
+            if(result.isConfirmed) {
+                if(result.value === 'DRESS1JAYA') {
+                    executeRecap();
+                } else {
+                    Swal.fire('Akses Ditolak', 'Password Salah!', 'error');
+                }
+            }
+        });
+    }
+
+    function executeRecap() {
+        if(!SCRIPT_URL) return;
+        
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loading-text').innerText = "MENUTUP REKAP HARIAN...";
+
+        const payload = { action: "recap", version: APP_VERSION, password: "DRESS1JAYA" };
+
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none';
+            if(data.result === "success") { 
+                Swal.fire('Berhasil!', 'Sheet Dashboard telah diduplikasi dan di-reset untuk esok hari.', 'success');
+            } else { 
+                Swal.fire('Error', data.error, 'error'); 
+            }
+        }).catch(err => { 
+            document.getElementById('loading').style.display = 'none'; 
+            Swal.fire('Gagal Koneksi', 'Pastikan internet stabil untuk melakukan rekap.', 'error');
+        });
+    }
+
+    function showSummaryAndSubmit() {
+        const namaQC = document.getElementById('nama_qc').value; 
+        const buyer = document.getElementById('buyer').value; 
+        const line = document.getElementById('line_name').value; 
+        const style = document.getElementById('style').value;
+        const color = document.getElementById('color').value;
+        const sp = document.getElementById('special_process').value;
+        
+        // Logika verifikasi juga menyesuaikan input baru
+        const qty_good = parseInt(document.getElementById('qty_good').value) || 0;
+        const t_def = parseInt(document.getElementById('tot_def').value) || 0; 
+        const t_insp = qty_good + t_def;
+
+        if(!namaQC || !line || !buyer || !style || !color || !sp) { 
+            Swal.fire('Perhatian', 'Semua kolom (NAMA QC, BUYER, LINE, SPESIAL PROSES, STYLE, COLOR) wajib diisi!', 'warning'); return; 
+        }
+        if(t_insp === 0) { 
+            Swal.fire('Data Tidak Valid', 'Total Lulus (Good) atau Defect harus diisi!', 'error'); return; 
+        }
+
+        Swal.fire({
+            title: 'KONFIRMASI REKAP',
+            html: `(Sistem akan menjumlahkan otomatis jika spesifikasi ini sudah ada)<br><br><b>Buyer:</b> ${buyer}<br><b>Line:</b> ${line} | <b>Style:</b> ${style}<br><b>Color:</b> ${color}<br><b>Total Inspect:</b> ${t_insp} pcs<br><b>Total Defect:</b> <span style="color:red; font-weight:bold;">${t_def}</span> pcs<br><b>Total Lulus:</b> <span style="color:green; font-weight:bold;">${qty_good}</span> pcs<br><hr>Kirim ke Server?`,
+            icon: 'question', showCancelButton: true, confirmButtonColor: '#4338ca', cancelButtonColor: '#ef4444', confirmButtonText: 'Ya, Kirim!'
+        }).then((result) => { if (result.isConfirmed) executeSendToServer(line); });
+    }
+
+    function checkOfflineBadge() {
+        let queue = JSON.parse(localStorage.getItem('qcOfflineQueue_fin') || '[]'); let btnSync = document.getElementById('btnSync');
+        if(queue.length > 0) { btnSync.style.display = 'flex'; btnSync.innerText = `SINKRON (${queue.length})`; } 
+        else { btnSync.style.display = 'none'; }
+    }
+
+    function executeSendToServer(line) {
+        if(!SCRIPT_URL) { fallbackOffline(line, {}); return; }
+
+        let btnSub = document.getElementById('btnSubmitMain');
+        btnSub.disabled = true; btnSub.innerHTML = 'MENGIRIM...';
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loading-text').innerText = "SYNC TO CLOUD...";
+
+        let defectsArray = [];
+        for(let key in activeDefects) {
+            let item = activeDefects[key];
+            defectsArray.push({ cat: item.cat, area: item.area, type: item.type, qty: parseInt(item.qty) || 0 });
+        }
+
+        const payload = {
+            action: "submit",
+            version: APP_VERSION,
+            nama_qc: document.getElementById('nama_qc').value,
+            tanggal: document.getElementById('tanggal').value, 
+            jam: document.getElementById('jam').value,
+            line_name: line, 
+            buyer: document.getElementById('buyer').value, 
+            style: document.getElementById('style').value,
+            color: document.getElementById('color').value, 
+            special_process: document.getElementById('special_process').value,
+            shift_start: document.getElementById('shift_start').value, 
+            shift_end: document.getElementById('shift_end').value,
+            jam_istirahat: document.getElementById('jam_istirahat').value,
+            qty_good: document.getElementById('qty_good').value, 
+            qty_insp: document.getElementById('qty_insp').value,
+            tot_def: document.getElementById('tot_def').value, 
+            pct_def: document.getElementById('pct_def').value,
+            defects: defectsArray
+        };
+
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
+            if(data.result === "success") { 
+                Swal.fire('Sukses', 'Data Finishing berhasil diakumulasikan ke Dashboard!', 'success').then(() => { clearAfterSubmit(); }); 
+            } else if(data.error === "VERSION_MISMATCH") {
+                Swal.fire('Versi Usang!', 'Aplikasi yang Anda gunakan sudah usang. Silakan minta file HTML versi terbaru ke SPV Anda.', 'error');
+            } else { 
+                Swal.fire('Error', 'Gagal dari server: ' + data.error, 'error'); 
+            }
+        }).catch(err => { 
+            document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
+            fallbackOffline(line, payload);
+        });
+    }
+
+    function fallbackOffline(line, payload) {
+        let queue = JSON.parse(localStorage.getItem('qcOfflineQueue_fin') || '[]'); queue.push({ payload: payload, lineName: line }); localStorage.setItem('qcOfflineQueue_fin', JSON.stringify(queue));
+        Swal.fire('Sistem Offline', 'Internet terputus. Data tersimpan di HP. Ketuk tombol SINKRON nanti saat sinyal bagus.', 'info');
+        checkOfflineBadge(); clearAfterSubmit();
+    }
+
+    function clearAfterSubmit() {
+        activeDefects = {}; renderDefectList();
+        // qty_insp diganti qty_good
+        ['style','color','qty_good'].forEach(id => { document.getElementById(id).value = ""; });
+        calculate(); saveData();
+    }
+
+    function pushOfflineData() {
+        let queue = JSON.parse(localStorage.getItem('qcOfflineQueue_fin') || '[]'); if(queue.length === 0) return;
+        document.getElementById('loading').style.display = 'flex'; document.getElementById('loading-text').innerText = "MENYINKRONKAN DATA OFFLINE...";
+        
+        let item = queue[0]; 
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(item.payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none';
+            if(data.result === "success") { 
+                queue.shift(); localStorage.setItem('qcOfflineQueue_fin', JSON.stringify(queue));
+                Swal.fire('Sukses', `Data Line ${item.lineName} terkirim!`, 'success'); checkOfflineBadge();
+                if(queue.length > 0) pushOfflineData(); 
+            } else if(data.error === "VERSION_MISMATCH") {
+                Swal.fire('Versi Usang!', 'Aplikasi usang. Hapus antrean ini dan gunakan aplikasi terbaru.', 'error');
+            } else { Swal.fire('Gagal', 'Coba lagi nanti.', 'error'); }
+        }).catch(err => { document.getElementById('loading').style.display = 'none'; Swal.fire('Koneksi Buruk', 'Masih belum ada internet.', 'warning'); });
+    }
+
+    async function exportToExcel() {
+        const buyer = document.getElementById('buyer').value || "";
+        const dateStr = document.getElementById('tanggal').value || "Hari_ini";
+        const shiftStart = document.getElementById('shift_start').value || "";
+        const shiftEnd = document.getElementById('shift_end').value || "";
+        const jamIstirahat = document.getElementById('jam_istirahat').value || "0";
+        
+        let shiftStr = shiftStart && shiftEnd ? `${shiftStart} - ${shiftEnd}` : "";
+        if(shiftStart && shiftEnd) {
+            let t1 = shiftStart.split(":"); let t2 = shiftEnd.split(":");
+            let d1 = new Date(2000, 0, 1, t1[0], t1[1]); let d2 = new Date(2000, 0, 1, t2[0], t2[1]);
+            if(d2 < d1) d2.setDate(d2.getDate() + 1); 
+            let diff = (d2 - d1) / (1000 * 60 * 60);
+            let hours = Math.floor(diff); let mins = Math.round((diff % 1) * 60);
+            shiftStr += ` (${hours} Jam${mins > 0 ? ' ' + mins + ' Menit' : ''})`;
+        }
+
+        const workbook = new ExcelJS.Workbook(); const sheet = workbook.addWorksheet("QC Finishing", { views: [{ showGridLines: false }] });
+        
+        sheet.getColumn('A').width = 6; sheet.getColumn('B').width = 30; sheet.getColumn('C').width = 25; sheet.getColumn('D').width = 25; sheet.getColumn('E').width = 12;
+        
+        sheet.addRow(["BUYER", "", "", "", buyer]); sheet.mergeCells('A1:D1'); 
+        sheet.addRow(["LINE", "", "", "", document.getElementById('line_name').value]); sheet.mergeCells('A2:D2'); 
+        sheet.addRow(["SHIFT", "", "", "", shiftStr]); sheet.mergeCells('A3:D3'); 
+        sheet.addRow(["ISTIRAHAT (Mnt)", "", "", "", jamIstirahat]); sheet.mergeCells('A4:D4'); 
+        sheet.addRow(["TANGGAL", "", "", "", dateStr]); sheet.mergeCells('A5:D5'); 
+        sheet.addRow(["STYLE", "", "", "", document.getElementById('style').value]); sheet.mergeCells('A6:D6'); 
+        sheet.addRow(["COLOR", "", "", "", document.getElementById('color').value]); sheet.mergeCells('A7:D7'); 
+        sheet.addRow(["QTY.DEFECT", "", "", "", document.getElementById('tot_def').value]); sheet.mergeCells('A8:D8'); 
+        sheet.addRow(["QTY.GOOD", "", "", "", document.getElementById('qty_good').value]); sheet.mergeCells('A9:D9'); 
+        sheet.addRow(["QTY.INSPECT", "", "", "", document.getElementById('qty_insp').value]); sheet.mergeCells('A10:D10'); 
+        sheet.addRow(["% DEFECT", "", "", "", document.getElementById('pct_def').value]); sheet.mergeCells('A11:D11'); 
+        sheet.addRow(["SPECIAL PROCESS", "", "", "", document.getElementById('special_process').value]); sheet.mergeCells('A12:D12'); 
+        
+        sheet.addRow(["NO", "KATEGORI", "AREA / PROSES", "JENIS DEFECT", "QTY"]);
+        
+        let rowIdx = 1;
+        let startRow = 14;
+
+        let lastCat = "";
+        let mergeCatStart = startRow;
+        
+        let lastArea = "";
+        let mergeAreaStart = startRow;
+
+        for(let key in activeDefects) {
+            let item = activeDefects[key];
+            let outputType = item.type === "-" ? "" : item.type;
+            
+            sheet.addRow([rowIdx++, item.cat, item.area, outputType, item.qty]);
+            let currentRow = startRow + rowIdx - 2;
+
+            if(item.cat !== lastCat && rowIdx > 2) {
+                if(currentRow - 1 > mergeCatStart) sheet.mergeCells(`B${mergeCatStart}:B${currentRow - 1}`);
+                mergeCatStart = currentRow;
+            }
+            lastCat = item.cat;
+
+            if(item.area !== lastArea && rowIdx > 2) {
+                if(currentRow - 1 > mergeAreaStart) sheet.mergeCells(`C${mergeAreaStart}:C${currentRow - 1}`);
+                mergeAreaStart = currentRow;
+            }
+            lastArea = item.area;
+        }
+
+        let finalRow = startRow + rowIdx - 2;
+        if(finalRow > mergeCatStart) sheet.mergeCells(`B${mergeCatStart}:B${finalRow}`);
+        if(finalRow > mergeAreaStart) sheet.mergeCells(`C${mergeAreaStart}:C${finalRow}`);
+
+        const blackFont = { name: 'Times New Roman', size: 11, color: { argb: 'FF000000' }, bold: true };
+        const borderStyle = { top: { style: 'thin', color: { argb: 'FF000000' } }, left: { style: 'thin', color: { argb: 'FF000000' } }, bottom: { style: 'thin', color: { argb: 'FF000000' } }, right: { style: 'thin', color: { argb: 'FF000000' } } };
+        const greyFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } }; 
+        const whiteFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+
+        sheet.eachRow((row, rowNumber) => {
+            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                if(colNumber <= 5) {
+                    cell.font = blackFont; cell.border = borderStyle; cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                    if(rowNumber <= 12) { 
+                        if(colNumber === 1) { cell.fill = greyFill; cell.alignment = { vertical: 'middle', horizontal: 'left' }; } 
+                        else if (colNumber === 5) { cell.fill = whiteFill; }
+                    } else if (rowNumber === 13) { cell.fill = greyFill; } 
+                    else {
+                        if(colNumber === 1 || colNumber === 2 || colNumber === 3) {
+                            cell.fill = greyFill;
+                            if (colNumber > 1) cell.alignment = { vertical: 'middle', horizontal: 'left' }; 
+                        } else { cell.fill = whiteFill; }
+                    }
+                }
+            });
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer(); 
+        saveAs(new Blob([buffer]), `QC_Finishing_${buyer || 'Offline'}_${dateStr}.xlsx`);
+    }
+
+    let secretTapCount = 0;
+    function triggerEasterEgg() {
+        secretTapCount++;
+        if(secretTapCount === 7) {
+            Swal.fire({ title: 'SYSTEM INFO', html: '<b>QC Dashboard System</b><br>Developed by:<br><span style="color:#0f766e; font-size:18px;"><b>Azriel</b></span><br><i>DRESS 1 USGU</i>', icon: 'info', confirmButtonColor: '#0f766e', background: document.body.classList.contains('dark-mode') ? '#1e293b' : '#fff', color: document.body.classList.contains('dark-mode') ? '#fff' : '#1e293b' });
+            secretTapCount = 0; 
+        }
+        setTimeout(() => { secretTapCount = 0; }, 2000); 
+    }
+</script>
+</body>
+</html>
