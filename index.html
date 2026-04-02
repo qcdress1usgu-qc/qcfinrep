@@ -657,7 +657,7 @@
             cancelButtonText: 'BATAL'
         }).then((result) => {
             if(result.isConfirmed) {
-                if(result.value === 'DRESS1JAYA') {
+                if(result.value === 'FIND1') {
                     executeRecap();
                 } else {
                     Swal.fire('Akses Ditolak', 'Password Salah!', 'error');
@@ -672,7 +672,7 @@
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('loading-text').innerText = "MENUTUP REKAP HARIAN...";
 
-        const payload = { action: "recap", version: APP_VERSION, password: "DRESS1JAYA" };
+        const payload = { action: "recap", version: APP_VERSION, password: "FIND1" };
 
         fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
         .then(res => res.json())
