@@ -149,6 +149,9 @@
     <option value="UNIQLO"><option value="VICTORIA'S SECRET"><option value="VINEYARD VINES"><option value="WHBM">
 </datalist>
 
+<datalist id="styleHistory"></datalist>
+<datalist id="colorHistory"></datalist>
+
 <div class="header">
     <div class="header-content">
         <div class="title-area" onclick="triggerEasterEgg()">
@@ -189,8 +192,8 @@
                 <input type="text" id="line_name" class="clickable" placeholder="Ketuk Pilih Line" readonly onclick="openLineModal()">
             </div>
             
-            <div class="input-group"><label class="req">STYLE:</label><input type="text" id="style" placeholder="Cth: 450211" oninput="saveData()"></div>
-            <div class="input-group"><label class="req">COLOR:</label><input type="text" id="color" placeholder="Cth: RED" oninput="saveData()"></div>
+            <div class="input-group"><label class="req">STYLE:</label><input type="text" id="style" list="styleHistory" placeholder="Cth: 450211" oninput="saveData()"></div>
+            <div class="input-group"><label class="req">COLOR:</label><input type="text" id="color" list="colorHistory" placeholder="Cth: RED" oninput="saveData()"></div>
 
             <div class="input-group">
                 <label class="req">SHIFT: <span id="shift_hours" style="color:var(--primary); font-weight:900;"></span></label>
@@ -318,6 +321,32 @@
 
     let defectChart; 
 
+    // === SISTEM MEMORI AUTOCPMPLETE (HISTORY LOKAL) ===
+    function saveHistory(type, value) {
+        if (!value) return;
+        let valUpper = value.trim().toUpperCase();
+        let history = JSON.parse(localStorage.getItem(`qcHistory_${type}_fin`) || '[]');
+        if (!history.includes(valUpper)) {
+            history.unshift(valUpper);
+            if (history.length > 20) history.pop(); // Simpan max 20 data terbaru
+            localStorage.setItem(`qcHistory_${type}_fin`, JSON.stringify(history));
+            loadHistoryToDatalist(type);
+        }
+    }
+
+    function loadHistoryToDatalist(type) {
+        let history = JSON.parse(localStorage.getItem(`qcHistory_${type}_fin`) || '[]');
+        let datalist = document.getElementById(`${type}History`);
+        if (datalist) {
+            datalist.innerHTML = history.map(item => `<option value="${item}">`).join('');
+        }
+    }
+
+    function initAllHistory() {
+        loadHistoryToDatalist('style');
+        loadHistoryToDatalist('color');
+    }
+
     function toggleTheme() { 
         document.body.classList.toggle('dark-mode'); 
         document.getElementById('themeBtn').innerText = document.body.classList.contains('dark-mode') ? 'LIGHT' : 'DARK'; 
@@ -411,7 +440,6 @@
         document.getElementById('gridSuffix').innerHTML = sufHtml;
     }
 
-    // ====== JENIS DEFECT SUDAH DIURUTKAN ABJAD (A-Z) ======
     const typeSewingGeneral = ["BROKEN STITCH", "FABRIC DEFECT", "INCONSISTENT", "MISSING", "PLEATED", "POORSHAPE/POINTED/EXPOSED", "PUCKERING", "RUN OF STITCH", "SHADING", "SKIP STITCH", "STAIN", "TRIMMING", "TWIST/ROPPING/FULLNESS", "UNMATCH/HIGH LOW"];
     
     const defectMaster = {
@@ -445,7 +473,6 @@
     function populateArea() {
         const selArea = document.getElementById('sel_area');
         selArea.innerHTML = '<option value="" disabled selected>-- Pilih Area --</option>';
-        // Diurutkan secara dinamis dengan .sort()
         Object.keys(defectMaster[currentCategory]).sort().forEach(area => { 
             selArea.innerHTML += `<option value="${area}">${area}</option>`; 
         });
@@ -458,7 +485,6 @@
         selType.innerHTML = '<option value="" disabled selected>-- Pilih Jenis --</option>';
         
         if(area && defectMaster[currentCategory][area]) {
-            // Diurutkan secara dinamis dengan .sort()
             const types = [...defectMaster[currentCategory][area]].sort();
             if(types.length === 1 && types[0] === "-") {
                 selType.innerHTML = '<option value="-">TIDAK ADA SUB-JENIS</option>';
@@ -541,18 +567,12 @@
 
     function removeDefect(key) { delete activeDefects[key]; renderDefectList(); }
 
-    // ====== LOGIKA PERHITUNGAN BARU ======
     function calculate() {
         let totalDefect = 0;
         for(let key in activeDefects) { totalDefect += parseInt(activeDefects[key].qty) || 0; }
         
-        // Simpan total defect ke field tersembunyi
         document.getElementById('tot_def').value = totalDefect;
-
-        // Ambil nilai Good (karena inputnya sekarang QTY GOOD)
         const qtyGood = parseInt(document.getElementById('qty_good').value) || 0;
-        
-        // Perhitungan: Total Inspect = Good + Defect
         const qtyInsp = qtyGood + totalDefect;
         
         let defPctStr = "0%", goodPctStr = "0%";
@@ -560,8 +580,6 @@
         if (qtyInsp > 0) {
             defPctStr = ((totalDefect / qtyInsp) * 100).toFixed(1) + "%";
             goodPctStr = ((qtyGood / qtyInsp) * 100).toFixed(1) + "%";
-            
-            // Simpan nilai untuk Payload (Export & Server)
             document.getElementById('qty_insp').value = qtyInsp;
             document.getElementById('pct_def').value = defPctStr;
         } else {
@@ -569,7 +587,6 @@
             document.getElementById('pct_def').value = "0%";
         }
 
-        // --- UPDATE LIVE CHART ---
         document.getElementById('chart_good').innerText = `${qtyGood} (${goodPctStr})`;
         document.getElementById('chart_def').innerText = totalDefect;
         let pctLabel = document.getElementById('chart_pct');
@@ -595,7 +612,7 @@
     }
     
     function loadData() { 
-        populateArea(); initChart();
+        populateArea(); initChart(); initAllHistory();
         const saved = localStorage.getItem('qcAutoSave3_fin'); 
         const savedDefects = localStorage.getItem('qcActiveDefects_fin');
         
@@ -619,7 +636,6 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 activeDefects = {}; renderDefectList();
-                // qty_insp diganti qty_good
                 ['line_name','buyer','style','color','special_process','shift_start','shift_end','jam_istirahat','qty_good'].forEach(id => { document.getElementById(id).value = ""; });
                 document.getElementById('shift_hours').innerText = ""; calculate(); saveData();
                 Swal.fire('Bersih!', 'Form sudah di-reset.', 'success');
@@ -681,7 +697,6 @@
         const color = document.getElementById('color').value;
         const sp = document.getElementById('special_process').value;
         
-        // Logika verifikasi juga menyesuaikan input baru
         const qty_good = parseInt(document.getElementById('qty_good').value) || 0;
         const t_def = parseInt(document.getElementById('tot_def').value) || 0; 
         const t_insp = qty_good + t_def;
@@ -697,7 +712,14 @@
             title: 'KONFIRMASI REKAP',
             html: `(Sistem akan menjumlahkan otomatis jika spesifikasi ini sudah ada)<br><br><b>Buyer:</b> ${buyer}<br><b>Line:</b> ${line} | <b>Style:</b> ${style}<br><b>Color:</b> ${color}<br><b>Total Inspect:</b> ${t_insp} pcs<br><b>Total Defect:</b> <span style="color:red; font-weight:bold;">${t_def}</span> pcs<br><b>Total Lulus:</b> <span style="color:green; font-weight:bold;">${qty_good}</span> pcs<br><hr>Kirim ke Server?`,
             icon: 'question', showCancelButton: true, confirmButtonColor: '#4338ca', cancelButtonColor: '#ef4444', confirmButtonText: 'Ya, Kirim!'
-        }).then((result) => { if (result.isConfirmed) executeSendToServer(line); });
+        }).then((result) => { 
+            if (result.isConfirmed) {
+                // SIMPAN KE HISTORY LOKAL SEBELUM KIRIM
+                saveHistory('style', style);
+                saveHistory('color', color);
+                executeSendToServer(line); 
+            }
+        });
     }
 
     function checkOfflineBadge() {
@@ -766,7 +788,6 @@
 
     function clearAfterSubmit() {
         activeDefects = {}; renderDefectList();
-        // qty_insp diganti qty_good
         ['style','color','qty_good'].forEach(id => { document.getElementById(id).value = ""; });
         calculate(); saveData();
     }
