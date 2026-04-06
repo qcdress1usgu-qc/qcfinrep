@@ -319,10 +319,10 @@
     let defectChart; 
 
     // ========================================================
-    // DATABASE EXCEL & SISTEM DROPDOWN BERTINGKAT
+    // DATABASE EXCEL (HANYA DARI SHEET LOKAL) & DROPDOWN MURNI
     // ========================================================
     
-    // Database Rangkuman dari semua Excel yang pernah diberikan
+    // Data mentah persis dari file Excel
     const rawDbData = `BUYER,STYLE,COLOR
 TH EU,XM0XM04862,Provence
 ,,Mudstone
@@ -367,19 +367,128 @@ CK NA,44C148G,Billowing Sail
 ,,Brilliant White
 ,,Windsurfer
 ,LV04RH100G,Brilliant White
-Lily P,020232,Multi Dahlia
-,019381,Paradise Punch
+,,Roasted Cashew
+,4RH100G,Brilliant White
+,4RH102G,Winter Blue
+PERRY ELLIS,4KFW7005,Ashleigh Blue
+,,Dark Sapphire
+,4KFW7024,Silver Birch
+,,Dark Sapphire
+NIC & ZOE,M261978,Blue Multi
+,M261021,Aquifer
+,,Dark Indigo
+,,Paper White
+,M261074,Blue Multi
+,M261621,Classic Cream
+,,Dark Indigo
+,M261303,Blue Multi
+,F261909N,Dark Indigo
+,M261699,Neutral Mix
+JJIL,WDR347571,Aqua Breeze
+,WDR348041,Lt Blue
+,WTP345601,Black
+AN TAYLOR,311-782429,Lemon Brulee
+,,Thyme Garden
+,,Cocoa Bliss
+,312-768474,Cocoa Bliss
+Ellen Fisher,F5SNY-S4418,Everglade
+,F5SNY-J5809,Ink
+,,Graphite
+,,Wine
+,,Rye
+,F5SNY-J5763,Ruby
+,,Ink
+,F6URT-T6200,Black/White
+,F6URT-P4366,Black/White
+,S6GBA-T5705,Black
+,,White
+,,Deep Dive
+,,Ibiza
+,,Crystal Pink
+,,Blackberry
+,,Lavender
+,,Soleil
+,S6GBA-U4415,Black
+,S6GBO-N1592,Hazelwood
+,,Deep Dive
+,S6GBO-U4415,Soleil
+,,Deep Dive
+,,Hazelwood
+,S6GBO-T5705,Cornflower
+,,Soleil
+,S6YCD-T5705,Black/White
+,,Geyser
+,S6YCW-T6064,Ink
+,S6YCN-P4936,White/Black
+,S6YCN-T6483,Sun Dried
+,,Black/White
+,S6GC1-T6441,Ivory
+,,Skylight
+,,Watermelon
+,S6GC1-T5775,Grape
+,,Black
+,S6OLA-T6353,Aqua
+,,Crystal Pink
+,S6OLA-T6356,Black
+,,Belf Flower
+,S6OLA-T6450,White
+,,Breeze
+,,Crystal Pink
+,S6OLA-T6166,White
+,,Bright Aster
+,,Fuchsia
+,,Sapphire
+,S6OLA-T6360,White
+,,Bright Aster
+,S6OLA-T6507,Petunia
+,,Aqua
+,S6OLA-T6368,Petunia
+,,Teal
+,S6OLA-T6478,Breeze
+,,White
+,S6YCN-T5775,White/Black
+,S6YCN-T6104,White/Black
+,S6YCR-P4869,Grenadine
+,,Black/White
+,S6YCR-T6031,Nile
+,,Grenadine
+,,Black/White
+,S6YCP-T5775,Deep Dive
+,S6YCP-T6334,Deep Dive
+,,Sangria
+,S6YCP-T6064,Sangria
+,S6DEE-J5558,Haze
+,,Ink
+,S6NWG-U4393,Papyrus
+,S6NWG-S4418,Papyrus
+,S6NWG-T6090,Berry Bloom
+,S6OCB-T6064,White
+,,Deep Dive
+,,Black
+,S6OCB-S4431,Deep Dive
+,,Black
+,S6OCB-T6356,White
+,,Berry Bloom
+,S6AJ9-T5704,Citrus
+,S6AJ9-T6031,Citrus
+,S6IUU-T6514,Deep Dive
+,,Cornflower
+,S6IUU-T6353,Hazelwood
+,,Cornflower
+,,Deep Dive
+Lily P,20232,Multi Dahlia
+,19381,Paradise Punch
 ,,Capri Blue
 ,,Conch Shell
 ,,Resort White
 ,,Iced Latte
-,021186,Conch Shell
-,023049,Resort White
+,21186,Conch Shell
+,23049,Resort White
 ,,Citrus Cooler
-,022142,Conch Shell
+,22142,Conch Shell
 ,,Mint Condition
 ,,Resort White
-,022076,Sunset Orange
+,22076,Sunset Orange
 WHBM/CHICCO’S,010-25W37320,Crush
 ,,Flamenco
 ,010-25C127788,Alabaster
@@ -398,104 +507,92 @@ VICTORIA’S SECRET,10241546,Coconut White
 ,10241547,Pink Frosting
 ,,Coconut White
 ,10241540,Fresh Jam
-,,White
-,10241679,Coconut White
-,,Black
-,10347757,Angel Pink
-,,Tequila Lime
-,,Heart Stripe
-,,Stripe Pink
-,,Coconut White
-,,Black
-EILEEN FISHER,S6AJ9-T5704,Citrus
-,S6AJ9-T6031,Citrus
-,S6IUU-T6514,Deep Dive
-,,Cornflower
-,S6IUU-T6353,Hazelwood
-,,Cornflower
-,,Deep Dive
-,F6URT-P4366M,Black/White
-J JILL,WDR348041,Lt Blue
-,WDR348042,Lt Blue
-,WDR348043,Lt Blue
-,WTP345601,Black
-,WTP345602,Black
-,WTP345603,Black
-,WTP347853,True Navy
-,WDR347571,Aqua Breeze
-,,Beechnut
-LL.BEAN,526440,Deepest Brew
-,,Navy/Blue
-,,Navy/Black
-,,Pink Sands
-,,Deepest Brown
-JMC,13410U201,White
-,,Denim
-,18174U101,White
-,,Navy
-,,Coral
-,,Teal
-,,Nautical Navy
-DILLARD'S/MURANO,S65WM207,Pale Lemon
+,,Whimsy/Coconut
+,10241679,Dot Coconut
+,10240823,Black
+,10347757,Scrept Heart
+DILLARDS,S65WM207,Pale Lemon
+,S65WM500,Egg shell
+,,Ferngreen
 ,Y35WM100,Lt Blue
 ,,White
-,,DK Navy
 ,,Black
-,,Lt Periwinkl
-,Y35WM107,Lt Blue
-,Y35WM108,White
-,Y35WM105,Black
-,Y35WM106,Navy
+,,DK Navy
 ,Y35WM100A,White
 ,,DK Navy
-,,Black
 ,,Lt Periwinkl
-,S65WM500,Egg Shell
-,,Fern Green
+,,Black
+,Y35WM105,Black
+,Y35WM106,Navy
+,Y35WM107,Lt Blue
+,Y35WM108,White
 ,Y55KM220,White
+,Y55KM221,White
 ,Y55KM223,Blue
 ,Y55KM224,Dk Blue
-NIC & ZOE,M261303,Blue Multi
-,M261303P,Blue Multi
-,M261303W,Blue Multi
-,F261909N,Dark Indigo
-,M261621,Classic Cr
-,,Dark Indigo`;
+J MC,11173U106 /,Coral Rose
+,0225141022/,White
+,18174U101,Navy
+,,Coral
+,,Teal
+,242231022,White
+,,Tan
+,,Sky Blue
+,,Navy
+,236681022,White
+,,Denim
+TOMMY BAHAMA,SW622735,Sea Clay
+LL.Bean,522846,Indigo Ink
+,519702,Sky Blue
+,,White
+,519776,Faded Olive
+,,Chambray
+,,Faded Olive
+,526440,Navy
+,,Deepest Brown
+,,Pink Sandstone
+,526910,Deepest Brown`;
 
     // Penterjemah Nama Singkatan Buyer dari Excel
     const buyerMapping = {
         "CK NA": ["CALVIN KLEIN"],
-        "TH EU": ["TH EU"], 
+        "TH EU": ["TH NA"], 
         "LILY P": ["LILLY PULITZER"],
         "WHBM/CHICCO’S": ["WHBM", "CHICO'S"],
         "WHBM/CHICCO'S": ["WHBM", "CHICO'S"],
         "BROOK BROTHERS": ["BROOKS BROTHERS"],
         "VICTORIA’S SECRET": ["VICTORIA'S SECRET"],
-        "VICTORIA'S SECRET": ["VICTORIA'S SECRET"]
+        "VICTORIA'S SECRET": ["VICTORIA'S SECRET"],
+        "JJIL": ["J.JILL"],
+        "AN TAYLOR": ["ANN TAYLOR"],
+        "ELLEN FISHER": ["EILEEN FISHER"],
+        "LL.BEAN": ["LL.BEAN"],
+        "LL BEAN": ["LL.BEAN"],
+        "J MC": ["JMC"]
     };
-
-    // Buyer Cadangan jika Excel Kosong
-    const ALL_BUYERS = ["AMERICAN EAGLE OUTFITTERS", "ANN INC.", "BROOKS BROTHERS", "CALVIN KLEIN", "CARHARTT", "CHICO'S", "DILLARD'S/MURANO", "DULUTH TRADING", "EILEEN FISHER", "GU", "HUGO BOSS", "J.CREW", "J.JILL", "JMC", "LL.BEAN", "LEVI'S", "LILLY PULITZER", "LULULEMON", "MACY'S", "NIC & ZOE", "PENGUIN", "PERRY ELLIS", "POLO RALPH LAUREN", "PVH", "TAILORED BRANDS", "TALBOTS", "TH EU", "TOMMY BAHAMA", "UNIQLO", "VICTORIA'S SECRET", "VINEYARD VINES", "WHBM", "JONNIE'O", "Vneet Tommy"];
 
     let dynamicDB = [];
 
+    // Fungsi untuk merakit Database LOKAL HTML MURNI dari Excel
     function buildDatabase() {
         let rows = rawDbData.trim().split('\n');
         let lastBuyer = "", lastStyle = "";
         
-        for (let i = 1; i < rows.length; i++) {
+        for (let i = 1; i < rows.length; i++) { // Mulai dari 1 untuk lewati Header
             let cols = rows[i].split(',').map(x => x.trim());
-            if (cols.length < 3) continue;
+            // Abaikan baris yang kosong semua
+            if (cols.length < 3 && cols.join('') === '') continue; 
             
-            let rawBuyer = cols[0];
-            let rawStyle = cols[1];
-            let rawColor = cols[2];
+            let rawBuyer = cols[0] || "";
+            let rawStyle = cols[1] || "";
+            let rawColor = cols[2] || "";
 
+            // Pewaris data kosong (seperti di Excel, jika kosong ikuti baris atasnya)
             if (rawBuyer) lastBuyer = rawBuyer;
             if (rawStyle) lastStyle = rawStyle;
 
             let cStyle = lastStyle.replace(/\.0$/, ''); 
-            let cColor = rawColor || "";
+            let cColor = rawColor;
 
             if (lastBuyer && cStyle) {
                 let keyBuyer = lastBuyer.toUpperCase();
@@ -508,19 +605,20 @@ NIC & ZOE,M261303,Blue Multi
         }
     }
 
+    // Mengisi List awal Buyer saat web pertama dibuka (STRICT DARI EXCEL)
     function populateBuyerSelect() {
         let buyerSelect = document.getElementById('buyer');
         let currentVal = buyerSelect.value;
         
-        let mappedBuyers = [...new Set(dynamicDB.map(r => r.buyer))].filter(Boolean);
-        let combinedBuyers = [...new Set([...ALL_BUYERS, ...mappedBuyers])].sort();
+        let mappedBuyers = [...new Set(dynamicDB.map(r => r.buyer))].filter(Boolean).sort();
         
         buyerSelect.innerHTML = '<option value="" disabled selected>-- Pilih Buyer --</option>' + 
-            combinedBuyers.map(b => `<option value="${b}">${b}</option>`).join('');
+            mappedBuyers.map(b => `<option value="${b}">${b}</option>`).join('');
         
-        if (combinedBuyers.includes(currentVal)) { buyerSelect.value = currentVal; }
+        if (mappedBuyers.includes(currentVal)) { buyerSelect.value = currentVal; }
     }
 
+    // Fungsi Utama: Dropdown Bertingkat (STRICT DARI EXCEL)
     function updateDropdowns(source) {
         let buyerSelect = document.getElementById('buyer');
         let styleSelect = document.getElementById('style');
@@ -531,7 +629,7 @@ NIC & ZOE,M261303,Blue Multi
 
         let filtered = dynamicDB;
 
-        // Reset Dropdown di bawahnya jika Induknya diubah
+        // Reset Dropdown Style & Color jika Buyer diubah
         if (source === 'buyer') {
             curStyle = "";
             styleSelect.innerHTML = '<option value="" disabled selected>-- Pilih Style --</option>';
@@ -566,6 +664,7 @@ NIC & ZOE,M261303,Blue Multi
             colorSelect.innerHTML = colorOptions;
         }
     }
+
 
     // ========================================================
     // LOGIKA UTAMA APLIKASI
