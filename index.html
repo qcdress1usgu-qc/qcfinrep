@@ -138,20 +138,6 @@
     <option value="TRISNI"><option value="WIDYA">
 </datalist>
 
-<datalist id="buyerList">
-    <option value="AMERICAN EAGLE OUTFITTERS"><option value="ANN INC."><option value="BROOKS BROTHERS"><option value="CALVIN KLEIN">
-    <option value="CARHARTT"><option value="CHICO'S"><option value="DILLARD'S/MURANO"><option value="DULUTH TRADING">
-    <option value="EILEEN FISHER"><option value="GU"><option value="HUGO BOSS"><option value="J.CREW">
-    <option value="J.JILL"><option value="JMC"><option value="LEVI'S"><option value="LILLY PULITZER">
-    <option value="LL.BEAN"><option value="LULULEMON"><option value="MACY'S"><option value="NIC & ZOE">
-    <option value="PENGUIN"><option value="PERRY ELLIS"><option value="POLO RALPH LAUREN"><option value="PVH">
-    <option value="TAILORED BRANDS"><option value="TALBOTS"><option value="TH NA"><option value="TOMMY BAHAMA">
-    <option value="UNIQLO"><option value="VICTORIA'S SECRET"><option value="VINEYARD VINES"><option value="WHBM">
-</datalist>
-
-<datalist id="styleHistory"></datalist>
-<datalist id="colorHistory"></datalist>
-
 <div class="header">
     <div class="header-content">
         <div class="title-area" onclick="triggerEasterEgg()">
@@ -185,15 +171,29 @@
                 <button class="btn-time" onclick="setNow()">SEKARANG</button>
             </div>
             
-            <div class="input-group"><label class="req">ORDER/BUYER:</label><input type="text" id="buyer" list="buyerList" placeholder="Pilih Buyer" oninput="saveData()"></div>
-            
             <div class="input-group">
                 <label class="req">NAMA LINE:</label>
                 <input type="text" id="line_name" class="clickable" placeholder="Ketuk Pilih Line" readonly onclick="openLineModal()">
             </div>
-            
-            <div class="input-group"><label class="req">STYLE:</label><input type="text" id="style" list="styleHistory" placeholder="Cth: 450211" oninput="saveData()"></div>
-            <div class="input-group"><label class="req">COLOR:</label><input type="text" id="color" list="colorHistory" placeholder="Cth: RED" oninput="saveData()"></div>
+
+            <div class="input-group">
+                <label class="req">ORDER/BUYER:</label>
+                <select id="buyer" onchange="updateDropdowns('buyer'); saveData()">
+                    <option value="" disabled selected>-- Pilih Buyer --</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label class="req">STYLE:</label>
+                <select id="style" onchange="updateDropdowns('style'); saveData()">
+                    <option value="" disabled selected>-- Pilih Style --</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label class="req">COLOR:</label>
+                <select id="color" onchange="saveData()">
+                    <option value="" disabled selected>-- Pilih Color --</option>
+                </select>
+            </div>
 
             <div class="input-group">
                 <label class="req">SHIFT: <span id="shift_hours" style="color:var(--primary); font-weight:900;"></span></label>
@@ -314,39 +314,262 @@
 
     // ==== GANTI DENGAN URL WEB APP BARU ====
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiwr2m82nWXxX2GLwR6euU7CEVRUjRcQvIwYL6ortrTzGZ6A38aeagzwyNgR_jnyA/exec"; 
-    
-    // ==== VERSI APLIKASI DIUBAH MENJADI 1.1 ====
     const APP_VERSION = "1.1"; 
     document.getElementById('verBadge').innerText = "v" + APP_VERSION;
-
     let defectChart; 
 
-    // === SISTEM MEMORI AUTOCPMPLETE (HISTORY LOKAL) ===
-    function saveHistory(type, value) {
-        if (!value) return;
-        let valUpper = value.trim().toUpperCase();
-        let history = JSON.parse(localStorage.getItem(`qcHistory_${type}_fin`) || '[]');
-        if (!history.includes(valUpper)) {
-            history.unshift(valUpper);
-            if (history.length > 20) history.pop(); // Simpan max 20 data terbaru
-            localStorage.setItem(`qcHistory_${type}_fin`, JSON.stringify(history));
-            loadHistoryToDatalist(type);
+    // ========================================================
+    // DATABASE EXCEL & SISTEM DROPDOWN BERTINGKAT
+    // ========================================================
+    
+    // Database Rangkuman dari semua Excel yang pernah diberikan
+    const rawDbData = `BUYER,STYLE,COLOR
+TH EU,XM0XM04862,Provence
+,,Mudstone
+,,Desert Sky
+,WW0WW50599,Ecru
+,,Dark Night
+,WW0WW50712,Linear Pop
+,WW0WW50710,Linear Pop
+,,Hibiscus Garden
+,WW0WW49724,Citronella
+CK NA,44C148G,Billowing Sail
+,44G033G,Angel Hair
+,44E107G,Ancient Water
+,,Brilliant White
+,,Shadow
+,,Plein Air
+,,Dusky Orchid
+,44E108G,Splatter Floral
+,,Extended Monogram
+,47F104G,Brilliant White
+,,India Ink
+,40EM125,Oil Green
+,,Tigers Eye
+,,Dusted Fox
+,,Dark Sapphire
+,,Estate Blue
+,,Plein Air
+,47H101G,Dusted Fox
+,47H129G,Brilliant White
+,47H693G,Blue Beverly
+,47H688G,Still Water
+,47H012G,Brilliant White
+,,Estate Blue
+,47H013G,Dusky Orchid
+,47H905G,Fulton Blue
+,4LH111G,Brilliant White
+,,Dark Sapphire
+,,Olive Night
+,,Windsurfer
+,,Ballet Slipper
+,LV04LH111G,Dark Sapphire
+,,Brilliant White
+,,Windsurfer
+,LV04RH100G,Brilliant White
+Lily P,020232,Multi Dahlia
+,019381,Paradise Punch
+,,Capri Blue
+,,Conch Shell
+,,Resort White
+,,Iced Latte
+,021186,Conch Shell
+,023049,Resort White
+,,Citrus Cooler
+,022142,Conch Shell
+,,Mint Condition
+,,Resort White
+,022076,Sunset Orange
+WHBM/CHICCO’S,010-25W37320,Crush
+,,Flamenco
+,010-25C127788,Alabaster
+,010-26W41919,Quiet Spot
+,210-26C139257,Alabaster
+BROOK BROTHERS,1000107174,Fun Stripe
+,1000108578,Red Alpine
+,,Alpine Navy
+,,Dk Sea Tartan
+,,Hydrangea
+,,Navy Brandy
+,,Alpine
+,,Dk Sea Tartan
+VICTORIA’S SECRET,10241546,Coconut White
+,,Gold Lurix
+,10241547,Pink Frosting
+,,Coconut White
+,10241540,Fresh Jam
+,,White
+,10241679,Coconut White
+,,Black
+,10347757,Angel Pink
+,,Tequila Lime
+,,Heart Stripe
+,,Stripe Pink
+,,Coconut White
+,,Black
+EILEEN FISHER,S6AJ9-T5704,Citrus
+,S6AJ9-T6031,Citrus
+,S6IUU-T6514,Deep Dive
+,,Cornflower
+,S6IUU-T6353,Hazelwood
+,,Cornflower
+,,Deep Dive
+,F6URT-P4366M,Black/White
+J JILL,WDR348041,Lt Blue
+,WDR348042,Lt Blue
+,WDR348043,Lt Blue
+,WTP345601,Black
+,WTP345602,Black
+,WTP345603,Black
+,WTP347853,True Navy
+,WDR347571,Aqua Breeze
+,,Beechnut
+LL.BEAN,526440,Deepest Brew
+,,Navy/Blue
+,,Navy/Black
+,,Pink Sands
+,,Deepest Brown
+JMC,13410U201,White
+,,Denim
+,18174U101,White
+,,Navy
+,,Coral
+,,Teal
+,,Nautical Navy
+DILLARD'S/MURANO,S65WM207,Pale Lemon
+,Y35WM100,Lt Blue
+,,White
+,,DK Navy
+,,Black
+,,Lt Periwinkl
+,Y35WM107,Lt Blue
+,Y35WM108,White
+,Y35WM105,Black
+,Y35WM106,Navy
+,Y35WM100A,White
+,,DK Navy
+,,Black
+,,Lt Periwinkl
+,S65WM500,Egg Shell
+,,Fern Green
+,Y55KM220,White
+,Y55KM223,Blue
+,Y55KM224,Dk Blue
+NIC & ZOE,M261303,Blue Multi
+,M261303P,Blue Multi
+,M261303W,Blue Multi
+,F261909N,Dark Indigo
+,M261621,Classic Cr
+,,Dark Indigo`;
+
+    // Penterjemah Nama Singkatan Buyer dari Excel
+    const buyerMapping = {
+        "CK NA": ["CALVIN KLEIN"],
+        "TH EU": ["TH EU"], 
+        "LILY P": ["LILLY PULITZER"],
+        "WHBM/CHICCO’S": ["WHBM", "CHICO'S"],
+        "WHBM/CHICCO'S": ["WHBM", "CHICO'S"],
+        "BROOK BROTHERS": ["BROOKS BROTHERS"],
+        "VICTORIA’S SECRET": ["VICTORIA'S SECRET"],
+        "VICTORIA'S SECRET": ["VICTORIA'S SECRET"]
+    };
+
+    // Buyer Cadangan jika Excel Kosong
+    const ALL_BUYERS = ["AMERICAN EAGLE OUTFITTERS", "ANN INC.", "BROOKS BROTHERS", "CALVIN KLEIN", "CARHARTT", "CHICO'S", "DILLARD'S/MURANO", "DULUTH TRADING", "EILEEN FISHER", "GU", "HUGO BOSS", "J.CREW", "J.JILL", "JMC", "LL.BEAN", "LEVI'S", "LILLY PULITZER", "LULULEMON", "MACY'S", "NIC & ZOE", "PENGUIN", "PERRY ELLIS", "POLO RALPH LAUREN", "PVH", "TAILORED BRANDS", "TALBOTS", "TH EU", "TOMMY BAHAMA", "UNIQLO", "VICTORIA'S SECRET", "VINEYARD VINES", "WHBM", "JONNIE'O", "Vneet Tommy"];
+
+    let dynamicDB = [];
+
+    function buildDatabase() {
+        let rows = rawDbData.trim().split('\n');
+        let lastBuyer = "", lastStyle = "";
+        
+        for (let i = 1; i < rows.length; i++) {
+            let cols = rows[i].split(',').map(x => x.trim());
+            if (cols.length < 3) continue;
+            
+            let rawBuyer = cols[0];
+            let rawStyle = cols[1];
+            let rawColor = cols[2];
+
+            if (rawBuyer) lastBuyer = rawBuyer;
+            if (rawStyle) lastStyle = rawStyle;
+
+            let cStyle = lastStyle.replace(/\.0$/, ''); 
+            let cColor = rawColor || "";
+
+            if (lastBuyer && cStyle) {
+                let keyBuyer = lastBuyer.toUpperCase();
+                let mappedBuyers = buyerMapping[keyBuyer] || [keyBuyer];
+                
+                mappedBuyers.forEach(b => {
+                    dynamicDB.push({ buyer: b, style: cStyle.toUpperCase(), color: cColor.toUpperCase() });
+                });
+            }
         }
     }
 
-    function loadHistoryToDatalist(type) {
-        let history = JSON.parse(localStorage.getItem(`qcHistory_${type}_fin`) || '[]');
-        let datalist = document.getElementById(`${type}History`);
-        if (datalist) {
-            datalist.innerHTML = history.map(item => `<option value="${item}">`).join('');
+    function populateBuyerSelect() {
+        let buyerSelect = document.getElementById('buyer');
+        let currentVal = buyerSelect.value;
+        
+        let mappedBuyers = [...new Set(dynamicDB.map(r => r.buyer))].filter(Boolean);
+        let combinedBuyers = [...new Set([...ALL_BUYERS, ...mappedBuyers])].sort();
+        
+        buyerSelect.innerHTML = '<option value="" disabled selected>-- Pilih Buyer --</option>' + 
+            combinedBuyers.map(b => `<option value="${b}">${b}</option>`).join('');
+        
+        if (combinedBuyers.includes(currentVal)) { buyerSelect.value = currentVal; }
+    }
+
+    function updateDropdowns(source) {
+        let buyerSelect = document.getElementById('buyer');
+        let styleSelect = document.getElementById('style');
+        let colorSelect = document.getElementById('color');
+
+        let curBuyer = buyerSelect.value;
+        let curStyle = styleSelect.value;
+
+        let filtered = dynamicDB;
+
+        // Reset Dropdown di bawahnya jika Induknya diubah
+        if (source === 'buyer') {
+            curStyle = "";
+            styleSelect.innerHTML = '<option value="" disabled selected>-- Pilih Style --</option>';
+            colorSelect.innerHTML = '<option value="" disabled selected>-- Pilih Color --</option>';
+        }
+
+        // Tampilkan Style sesuai Buyer yang dipilih
+        if (curBuyer) {
+            filtered = filtered.filter(row => row.buyer === curBuyer);
+            let validStyles = [...new Set(filtered.map(row => row.style))].filter(Boolean).sort();
+            
+            let styleOptions = '<option value="" disabled selected>-- Pilih Style --</option>';
+            validStyles.forEach(s => { styleOptions += `<option value="${s}">${s}</option>`; });
+            styleSelect.innerHTML = styleOptions;
+
+            if (validStyles.includes(curStyle)) { styleSelect.value = curStyle; } 
+            else { curStyle = ""; }
+        }
+
+        // Reset Color jika Style diubah
+        if (source === 'style') {
+            colorSelect.innerHTML = '<option value="" disabled selected>-- Pilih Color --</option>';
+        }
+
+        // Tampilkan Color sesuai Style & Buyer yang dipilih
+        if (curBuyer && curStyle) {
+            let styleFiltered = filtered.filter(row => row.style === curStyle);
+            let validColors = [...new Set(styleFiltered.map(row => row.color))].filter(Boolean).sort();
+
+            let colorOptions = '<option value="" disabled selected>-- Pilih Color --</option>';
+            validColors.forEach(c => { colorOptions += `<option value="${c}">${c}</option>`; });
+            colorSelect.innerHTML = colorOptions;
         }
     }
 
-    function initAllHistory() {
-        loadHistoryToDatalist('style');
-        loadHistoryToDatalist('color');
-    }
-
+    // ========================================================
+    // LOGIKA UTAMA APLIKASI
+    // ========================================================
     function toggleTheme() { 
         document.body.classList.toggle('dark-mode'); 
         document.getElementById('themeBtn').innerText = document.body.classList.contains('dark-mode') ? 'LIGHT' : 'DARK'; 
@@ -366,22 +589,14 @@
             let t2 = end.split(":");
             let d1 = new Date(2000, 0, 1, t1[0], t1[1]); 
             let d2 = new Date(2000, 0, 1, t2[0], t2[1]);
-            
             if(d2 < d1) d2.setDate(d2.getDate() + 1); 
-            
             let diff = (d2 - d1) / (1000 * 60 * 60);
             let hours = Math.floor(diff);
             let mins = Math.round((diff % 1) * 60);
-            
             displaySpan.innerText = `(${hours} Jam ${mins > 0 ? mins + ' Menit' : ''})`;
-        } else { 
-            displaySpan.innerText = ""; 
-        }
+        } else { displaySpan.innerText = ""; }
     }
 
-    // ========================================================
-    // LOGIKA KEYPAD MODAL LINE
-    // ========================================================
     let selectedNum = "";
     let selectedSuf = "";
     let selectedLines = [];
@@ -402,7 +617,7 @@
         }
         document.getElementById('lineModal').style.display = 'none';
         document.getElementById('line_name').value = selectedLines.join(', ');
-        saveData();
+        saveData(); 
     }
 
     function pickNum(n) { selectedNum = n; renderLineModal(); }
@@ -424,14 +639,12 @@
         let tagsHtml = selectedLines.map(l => `<div class="line-tag">${l} <span onclick="removeLineTag('${l}'); event.stopPropagation();">✖</span></div>`).join('');
         if(!tagsHtml) tagsHtml = `<span style="color:var(--text-sub); font-size:11px; margin:auto;">Pilih angka di bawah...</span>`;
         document.getElementById('lineTags').innerHTML = tagsHtml;
-
         let numsHtml = "";
         for(let i = 1; i <= 20; i++) {
             let selClass = (selectedNum == i) ? 'selected' : '';
             numsHtml += `<button class="num-btn ${selClass}" onclick="pickNum('${i}')">${i}</button>`;
         }
         document.getElementById('gridNumbers').innerHTML = numsHtml;
-
         let sufs = [ {val: "", label: "ANGKA SAJA"}, {val: "A", label: "A"}, {val: "B", label: "B"} ];
         let sufHtml = sufs.map(s => {
             let selClass = (selectedSuf === s.val) ? 'selected' : '';
@@ -441,7 +654,6 @@
     }
 
     const typeSewingGeneral = ["BROKEN STITCH", "FABRIC DEFECT", "INCONSISTENT", "MISSING", "PLEATED", "POORSHAPE/POINTED/EXPOSED", "PUCKERING", "RUN OF STITCH", "SHADING", "SKIP STITCH", "STAIN", "TRIMMING", "TWIST/ROPPING/FULLNESS", "UNMATCH/HIGH LOW"];
-    
     const defectMaster = {
         "SEWING": {
             "ARMHOLE": typeSewingGeneral, "BACK BODY": typeSewingGeneral, "BARTACK": typeSewingGeneral,
@@ -483,7 +695,6 @@
         const area = document.getElementById('sel_area').value;
         const selType = document.getElementById('sel_type');
         selType.innerHTML = '<option value="" disabled selected>-- Pilih Jenis --</option>';
-        
         if(area && defectMaster[currentCategory][area]) {
             const types = [...defectMaster[currentCategory][area]].sort();
             if(types.length === 1 && types[0] === "-") {
@@ -508,15 +719,11 @@
     function addDefectToList() {
         let area = document.getElementById('sel_area').value;
         let type = document.getElementById('sel_type').value;
-        
         if(!area || !type) { Swal.fire('Perhatian', 'Pilih Area dan Jenis Defect terlebih dahulu.', 'warning'); return; }
-
         let key = `${currentCategory}_${area}_${type}`;
         if(activeDefects[key]) { Swal.fire('Info', 'Defect ini sudah ada di daftar.', 'info'); return; }
-
         activeDefects[key] = { cat: currentCategory, area: area, type: type, qty: "" };
         document.getElementById('sel_area').value = ""; document.getElementById('sel_type').value = "";
-        
         renderDefectList();
         if (window.navigator && window.navigator.vibrate) navigator.vibrate(50);
     }
@@ -524,7 +731,6 @@
     function renderDefectList() {
         let container = document.getElementById('active_defects_container');
         let html = ""; let count = 0;
-
         for(let key in activeDefects) {
             count++; let item = activeDefects[key];
             let typeSubtitle = item.type === "-" ? "" : `<span class="summary-subtitle">↳ ${item.type}</span>`;
@@ -543,7 +749,6 @@
                 </div>
             </div>`;
         }
-
         if(count === 0) container.innerHTML = `<div class="empty-state" id="empty_state">BELUM ADA DEFECT YANG DITAMBAHKAN.<br><span style="font-weight:normal; font-size:11px;">Silakan pilih Area & Jenis di atas lalu klik Tambahkan.</span></div>`;
         else container.innerHTML = html;
         calculate();
@@ -570,13 +775,11 @@
     function calculate() {
         let totalDefect = 0;
         for(let key in activeDefects) { totalDefect += parseInt(activeDefects[key].qty) || 0; }
-        
         document.getElementById('tot_def').value = totalDefect;
         const qtyGood = parseInt(document.getElementById('qty_good').value) || 0;
         const qtyInsp = qtyGood + totalDefect;
         
         let defPctStr = "0%", goodPctStr = "0%";
-        
         if (qtyInsp > 0) {
             defPctStr = ((totalDefect / qtyInsp) * 100).toFixed(1) + "%";
             goodPctStr = ((qtyGood / qtyInsp) * 100).toFixed(1) + "%";
@@ -598,7 +801,6 @@
             pctLabel.innerText = defPctStr; pctLabel.style.color = totalDefect > 0 ? "var(--danger)" : "var(--success)";
             if(defectChart) { defectChart.data.datasets[0].data = [qtyGood, totalDefect]; defectChart.data.datasets[0].backgroundColor = ['#10b981', '#ef4444']; defectChart.update(); }
         }
-        
         saveData(); 
     }
 
@@ -612,15 +814,29 @@
     }
     
     function loadData() { 
-        populateArea(); initChart(); initAllHistory();
+        populateArea(); initChart(); 
+        
+        // BANGUN DATABASE & ISI DROPDOWN BUYER PERTAMA KALI
+        buildDatabase(); 
+        populateBuyerSelect();
+        
         const saved = localStorage.getItem('qcAutoSave3_fin'); 
         const savedDefects = localStorage.getItem('qcActiveDefects_fin');
         
         if(savedDefects) { activeDefects = JSON.parse(savedDefects); renderDefectList(); }
         if(saved) { 
             const data = JSON.parse(saved); 
+            
+            // Restore Dropdown Berantai Secara Berurutan
+            if(data['buyer']) { document.getElementById('buyer').value = data['buyer']; updateDropdowns('buyer'); }
+            if(data['style']) { document.getElementById('style').value = data['style']; updateDropdowns('style'); }
+            if(data['color']) { document.getElementById('color').value = data['color']; }
+
+            // Restore sisa field
             document.querySelectorAll('input, textarea, select').forEach(input => { 
-                if(data[input.id] !== undefined) input.value = data[input.id]; 
+                if(input.id && !['buyer', 'style', 'color'].includes(input.id) && !input.readOnly && !input.id.startsWith('inp_')) {
+                    if(data[input.id] !== undefined) input.value = data[input.id]; 
+                }
             }); 
             calculateShiftHours(); calculate(); 
         } else { setDefaultDate(); } 
@@ -637,7 +853,11 @@
             if (result.isConfirmed) {
                 activeDefects = {}; renderDefectList();
                 ['line_name','buyer','style','color','special_process','shift_start','shift_end','jam_istirahat','qty_good'].forEach(id => { document.getElementById(id).value = ""; });
-                document.getElementById('shift_hours').innerText = ""; calculate(); saveData();
+                document.getElementById('shift_hours').innerText = ""; calculate(); 
+                
+                // Reset Dropdown Kembali Kosong
+                populateBuyerSelect(); updateDropdowns('buyer'); 
+                saveData();
                 Swal.fire('Bersih!', 'Form sudah di-reset.', 'success');
             }
         });
@@ -657,32 +877,22 @@
             cancelButtonText: 'BATAL'
         }).then((result) => {
             if(result.isConfirmed) {
-                if(result.value === 'FIND1') {
-                    executeRecap();
-                } else {
-                    Swal.fire('Akses Ditolak', 'Password Salah!', 'error');
-                }
+                if(result.value === 'FIND1') { executeRecap(); } else { Swal.fire('Akses Ditolak', 'Password Salah!', 'error'); }
             }
         });
     }
 
     function executeRecap() {
         if(!SCRIPT_URL) return;
-        
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('loading-text').innerText = "MENUTUP REKAP HARIAN...";
-
         const payload = { action: "recap", version: APP_VERSION, password: "FIND1" };
-
         fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
         .then(res => res.json())
         .then(data => {
             document.getElementById('loading').style.display = 'none';
-            if(data.result === "success") { 
-                Swal.fire('Berhasil!', 'Sheet Dashboard telah diduplikasi dan di-reset untuk esok hari.', 'success');
-            } else { 
-                Swal.fire('Error', data.error, 'error'); 
-            }
+            if(data.result === "success") { Swal.fire('Berhasil!', 'Sheet Dashboard telah diduplikasi dan di-reset untuk esok hari.', 'success'); } 
+            else { Swal.fire('Error', data.error, 'error'); }
         }).catch(err => { 
             document.getElementById('loading').style.display = 'none'; 
             Swal.fire('Gagal Koneksi', 'Pastikan internet stabil untuk melakukan rekap.', 'error');
@@ -714,9 +924,6 @@
             icon: 'question', showCancelButton: true, confirmButtonColor: '#4338ca', cancelButtonColor: '#ef4444', confirmButtonText: 'Ya, Kirim!'
         }).then((result) => { 
             if (result.isConfirmed) {
-                // SIMPAN KE HISTORY LOKAL SEBELUM KIRIM
-                saveHistory('style', style);
-                saveHistory('color', color);
                 executeSendToServer(line); 
             }
         });
@@ -730,7 +937,6 @@
 
     function executeSendToServer(line) {
         if(!SCRIPT_URL) { fallbackOffline(line, {}); return; }
-
         let btnSub = document.getElementById('btnSubmitMain');
         btnSub.disabled = true; btnSub.innerHTML = 'MENGIRIM...';
         document.getElementById('loading').style.display = 'flex';
@@ -743,24 +949,13 @@
         }
 
         const payload = {
-            action: "submit",
-            version: APP_VERSION,
-            nama_qc: document.getElementById('nama_qc').value,
-            tanggal: document.getElementById('tanggal').value, 
-            jam: document.getElementById('jam').value,
-            line_name: line, 
-            buyer: document.getElementById('buyer').value, 
-            style: document.getElementById('style').value,
-            color: document.getElementById('color').value, 
-            special_process: document.getElementById('special_process').value,
-            shift_start: document.getElementById('shift_start').value, 
-            shift_end: document.getElementById('shift_end').value,
-            jam_istirahat: document.getElementById('jam_istirahat').value,
-            qty_good: document.getElementById('qty_good').value, 
-            qty_insp: document.getElementById('qty_insp').value,
-            tot_def: document.getElementById('tot_def').value, 
-            pct_def: document.getElementById('pct_def').value,
-            defects: defectsArray
+            action: "submit", version: APP_VERSION, nama_qc: document.getElementById('nama_qc').value,
+            tanggal: document.getElementById('tanggal').value, jam: document.getElementById('jam').value, line_name: line, 
+            buyer: document.getElementById('buyer').value, style: document.getElementById('style').value, color: document.getElementById('color').value, 
+            special_process: document.getElementById('special_process').value, shift_start: document.getElementById('shift_start').value, 
+            shift_end: document.getElementById('shift_end').value, jam_istirahat: document.getElementById('jam_istirahat').value,
+            qty_good: document.getElementById('qty_good').value, qty_insp: document.getElementById('qty_insp').value,
+            tot_def: document.getElementById('tot_def').value, pct_def: document.getElementById('pct_def').value, defects: defectsArray
         };
 
         fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
@@ -771,9 +966,7 @@
                 Swal.fire('Sukses', 'Data Finishing berhasil diakumulasikan ke Dashboard!', 'success').then(() => { clearAfterSubmit(); }); 
             } else if(data.error === "VERSION_MISMATCH") {
                 Swal.fire('Versi Usang!', 'Aplikasi yang Anda gunakan sudah usang. Silakan minta file HTML versi terbaru ke SPV Anda.', 'error');
-            } else { 
-                Swal.fire('Error', 'Gagal dari server: ' + data.error, 'error'); 
-            }
+            } else { Swal.fire('Error', 'Gagal dari server: ' + data.error, 'error'); }
         }).catch(err => { 
             document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
             fallbackOffline(line, payload);
@@ -789,13 +982,12 @@
     function clearAfterSubmit() {
         activeDefects = {}; renderDefectList();
         ['style','color','qty_good'].forEach(id => { document.getElementById(id).value = ""; });
-        calculate(); saveData();
+        calculate(); populateBuyerSelect(); updateDropdowns('buyer'); saveData();
     }
 
     function pushOfflineData() {
         let queue = JSON.parse(localStorage.getItem('qcOfflineQueue_fin') || '[]'); if(queue.length === 0) return;
         document.getElementById('loading').style.display = 'flex'; document.getElementById('loading-text').innerText = "MENYINKRONKAN DATA OFFLINE...";
-        
         let item = queue[0]; 
         fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(item.payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
         .then(res => res.json())
@@ -823,15 +1015,12 @@
             let t1 = shiftStart.split(":"); let t2 = shiftEnd.split(":");
             let d1 = new Date(2000, 0, 1, t1[0], t1[1]); let d2 = new Date(2000, 0, 1, t2[0], t2[1]);
             if(d2 < d1) d2.setDate(d2.getDate() + 1); 
-            let diff = (d2 - d1) / (1000 * 60 * 60);
-            let hours = Math.floor(diff); let mins = Math.round((diff % 1) * 60);
+            let diff = (d2 - d1) / (1000 * 60 * 60); let hours = Math.floor(diff); let mins = Math.round((diff % 1) * 60);
             shiftStr += ` (${hours} Jam${mins > 0 ? ' ' + mins + ' Menit' : ''})`;
         }
 
         const workbook = new ExcelJS.Workbook(); const sheet = workbook.addWorksheet("QC Finishing", { views: [{ showGridLines: false }] });
-        
         sheet.getColumn('A').width = 6; sheet.getColumn('B').width = 30; sheet.getColumn('C').width = 25; sheet.getColumn('D').width = 25; sheet.getColumn('E').width = 12;
-        
         sheet.addRow(["BUYER", "", "", "", buyer]); sheet.mergeCells('A1:D1'); 
         sheet.addRow(["LINE", "", "", "", document.getElementById('line_name').value]); sheet.mergeCells('A2:D2'); 
         sheet.addRow(["SHIFT", "", "", "", shiftStr]); sheet.mergeCells('A3:D3'); 
@@ -844,35 +1033,16 @@
         sheet.addRow(["QTY.INSPECT", "", "", "", document.getElementById('qty_insp').value]); sheet.mergeCells('A10:D10'); 
         sheet.addRow(["% DEFECT", "", "", "", document.getElementById('pct_def').value]); sheet.mergeCells('A11:D11'); 
         sheet.addRow(["SPECIAL PROCESS", "", "", "", document.getElementById('special_process').value]); sheet.mergeCells('A12:D12'); 
-        
         sheet.addRow(["NO", "KATEGORI", "AREA / PROSES", "JENIS DEFECT", "QTY"]);
         
-        let rowIdx = 1;
-        let startRow = 14;
-
-        let lastCat = "";
-        let mergeCatStart = startRow;
-        
-        let lastArea = "";
-        let mergeAreaStart = startRow;
-
+        let rowIdx = 1; let startRow = 14; let lastCat = ""; let mergeCatStart = startRow; let lastArea = ""; let mergeAreaStart = startRow;
         for(let key in activeDefects) {
-            let item = activeDefects[key];
-            let outputType = item.type === "-" ? "" : item.type;
-            
+            let item = activeDefects[key]; let outputType = item.type === "-" ? "" : item.type;
             sheet.addRow([rowIdx++, item.cat, item.area, outputType, item.qty]);
             let currentRow = startRow + rowIdx - 2;
-
-            if(item.cat !== lastCat && rowIdx > 2) {
-                if(currentRow - 1 > mergeCatStart) sheet.mergeCells(`B${mergeCatStart}:B${currentRow - 1}`);
-                mergeCatStart = currentRow;
-            }
+            if(item.cat !== lastCat && rowIdx > 2) { if(currentRow - 1 > mergeCatStart) sheet.mergeCells(`B${mergeCatStart}:B${currentRow - 1}`); mergeCatStart = currentRow; }
             lastCat = item.cat;
-
-            if(item.area !== lastArea && rowIdx > 2) {
-                if(currentRow - 1 > mergeAreaStart) sheet.mergeCells(`C${mergeAreaStart}:C${currentRow - 1}`);
-                mergeAreaStart = currentRow;
-            }
+            if(item.area !== lastArea && rowIdx > 2) { if(currentRow - 1 > mergeAreaStart) sheet.mergeCells(`C${mergeAreaStart}:C${currentRow - 1}`); mergeAreaStart = currentRow; }
             lastArea = item.area;
         }
 
@@ -882,29 +1052,21 @@
 
         const blackFont = { name: 'Times New Roman', size: 11, color: { argb: 'FF000000' }, bold: true };
         const borderStyle = { top: { style: 'thin', color: { argb: 'FF000000' } }, left: { style: 'thin', color: { argb: 'FF000000' } }, bottom: { style: 'thin', color: { argb: 'FF000000' } }, right: { style: 'thin', color: { argb: 'FF000000' } } };
-        const greyFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } }; 
-        const whiteFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+        const greyFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } }; const whiteFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
 
         sheet.eachRow((row, rowNumber) => {
             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                 if(colNumber <= 5) {
                     cell.font = blackFont; cell.border = borderStyle; cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                    if(rowNumber <= 12) { 
-                        if(colNumber === 1) { cell.fill = greyFill; cell.alignment = { vertical: 'middle', horizontal: 'left' }; } 
-                        else if (colNumber === 5) { cell.fill = whiteFill; }
-                    } else if (rowNumber === 13) { cell.fill = greyFill; } 
-                    else {
-                        if(colNumber === 1 || colNumber === 2 || colNumber === 3) {
-                            cell.fill = greyFill;
-                            if (colNumber > 1) cell.alignment = { vertical: 'middle', horizontal: 'left' }; 
+                    if(rowNumber <= 12) { if(colNumber === 1) { cell.fill = greyFill; cell.alignment = { vertical: 'middle', horizontal: 'left' }; } else if (colNumber === 5) { cell.fill = whiteFill; }
+                    } else if (rowNumber === 13) { cell.fill = greyFill; } else {
+                        if(colNumber === 1 || colNumber === 2 || colNumber === 3) { cell.fill = greyFill; if (colNumber > 1) cell.alignment = { vertical: 'middle', horizontal: 'left' }; 
                         } else { cell.fill = whiteFill; }
                     }
                 }
             });
         });
-
-        const buffer = await workbook.xlsx.writeBuffer(); 
-        saveAs(new Blob([buffer]), `QC_Finishing_${buyer || 'Offline'}_${dateStr}.xlsx`);
+        const buffer = await workbook.xlsx.writeBuffer(); saveAs(new Blob([buffer]), `QC_Finishing_${buyer || 'Offline'}_${dateStr}.xlsx`);
     }
 
     let secretTapCount = 0;
