@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>USGU DRESS 1 QC FINISHING DASHBOARD v1.6</title>
+    <title>USGU DRESS 1 QC FINISHING DASHBOARD v2.0</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -227,7 +227,7 @@
     <div class="header-content">
         <div class="title-area" onclick="triggerEasterEgg()">
             <div class="main-title">QC FINISHING DASHBOARD</div>
-            <div class="sub-title">QUALITY ENGINEERING USGU DRESS 1 <span class="version-badge" id="verBadge">v1.6</span></div>
+            <div class="sub-title">QUALITY ENGINEERING USGU DRESS 1 <span class="version-badge" id="verBadge">v2.0</span></div>
         </div>
         <img src="logolight.png" class="theme-toggle-logo" id="themeBtn" onclick="toggleTheme()" alt="Mode">
     </div>
@@ -439,9 +439,17 @@
     </div>
 
     <div class="card" id="tracker_chart_card" style="display: none;">
-        <label style="border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-bottom: 15px; font-size: 12px; color: var(--primary); font-weight: 800; display: block;">ANALITIK DATA</label>
-        <div style="height: 200px; position: relative;">
-            <canvas id="trackerAnalyticsChart"></canvas>
+        <label style="border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-bottom: 15px; font-size: 12px; color: var(--primary); font-weight: 800; display: block;">ANALITIK AKUMULASI TRACKER</label>
+        <div class="chart-container">
+            <div class="chart-box">
+                <canvas id="trackerAnalyticsChart"></canvas>
+            </div>
+            <div class="chart-details">
+                <div class="chart-title">DEFECT RATE AKUMULASI</div>
+                <div class="chart-pct" id="tracker_chart_pct">0%</div>
+                <div class="chart-legend"><span class="legend-dot" style="background:var(--success);"></span> GOOD : <span id="tracker_chart_good">0 (0%)</span></div>
+                <div class="chart-legend"><span class="legend-dot" style="background:var(--danger);"></span> DEFECT : <span id="tracker_chart_def">0</span></div>
+            </div>
         </div>
     </div>
     
@@ -512,6 +520,7 @@
 <script>
     document.addEventListener('contextmenu', event => event.preventDefault()); 
 
+    // URL TIDAK DIUBAH SAMA SEKALI
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiwr2m82nWXxX2GLwR6euU7CEVRUjRcQvIwYL6ortrTzGZ6A38aeagzwyNgR_jnyA/exec"; 
     const APP_VERSION = "2.0"; 
     document.getElementById('verBadge').innerText = "v" + APP_VERSION;
@@ -1021,8 +1030,17 @@ LL.Bean,522846,Indigo Ink
                     tbody.innerHTML += `<tr><td>${d.tanggal}</td><td>${qcLabel}</td><td>${d.line}</td><td>${d.buyer}</td><td>${d.style}</td><td>${d.color}</td><td style="font-weight:bold;">${d.insp}</td><td style="color:var(--danger); font-weight:bold;">${d.def}</td><td style="color:var(--success); font-weight:bold;">${d.good}</td><td>${d.pct}</td></tr>`;
                 });
                 
+                // MENGUPDATE TEKS ANALITIK SEBELUM RENDER CHART
+                let overallPctStr = totalInsp > 0 ? ((totalDef / totalInsp) * 100).toFixed(1) + "%" : "0%";
+                let goodPctStr = totalInsp > 0 ? ((totalGood / totalInsp) * 100).toFixed(1) + "%" : "0%";
+
+                document.getElementById('tracker_chart_pct').innerText = overallPctStr;
+                document.getElementById('tracker_chart_pct').style.color = totalDef > 0 ? "var(--danger)" : "var(--success)";
+                document.getElementById('tracker_chart_good').innerText = `${totalGood} (${goodPctStr})`;
+                document.getElementById('tracker_chart_def').innerText = totalDef;
+
                 document.getElementById('tracker_chart_card').style.display = 'block';
-                renderTrackerChart([totalGood, totalDef], ['Good', 'Total Defect']);
+                renderTrackerChart([totalGood, totalDef]);
                 
                 document.getElementById('tracker_table_wrapper').style.display = 'block';
                 document.getElementById('toggleTableBtn').innerText = 'SEMBUNYIKAN';
@@ -1038,22 +1056,22 @@ LL.Bean,522846,Indigo Ink
         });
     }
 
-    function renderTrackerChart(dataVals, labels) {
+    // UPDATE: MENGGUNAKAN GRAFIK DOUGHNUT YANG PREMIUM
+    function renderTrackerChart(dataVals) {
         const ctx = document.getElementById('trackerAnalyticsChart').getContext('2d');
         if(trackerAnalyticsChart) { trackerAnalyticsChart.destroy(); }
         
         trackerAnalyticsChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'doughnut',
             data: {
-                labels: labels,
+                labels: ['Good', 'Defect'],
                 datasets: [{
-                    label: 'Total QTY',
                     data: dataVals,
                     backgroundColor: ['#10b981', '#ef4444'],
-                    borderRadius: 6
+                    borderWidth: 0
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
         });
     }
 
@@ -1094,7 +1112,6 @@ LL.Bean,522846,Indigo Ink
             
             if(d.qc.includes('[REV]')) hasRev = true;
             
-            // Bersihkan tag HTML dan string [REV] / [ASLI] secara total
             let rawQc = d.qc.replace(/<[^>]*>?/gm, '').replace(/\[REV\]/g, '').replace(/\[ASLI\]/g, '').trim(); 
             listText += `${i+1}. ${d.tanggal} | L.${d.line} | ${rawQc} | Insp:${d.insp} | Def:${d.def} (${d.pct})\n`;
         });
@@ -1457,7 +1474,7 @@ LL.Bean,522846,Indigo Ink
 
     function recapSPV() {
         Swal.fire({
-            title: 'MASUKKAN PASSWORD SPV',
+            title: 'OTORISASI SUPERVISOR',
             input: 'password',
             inputPlaceholder: 'Masukkan Password SPV',
             inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
