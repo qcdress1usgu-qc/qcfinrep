@@ -1474,7 +1474,7 @@ LL.Bean,522846,Indigo Ink
 
     function recapSPV() {
         Swal.fire({
-            title: 'OTORISASI SUPERVISOR',
+            title: 'PASSWORD',
             input: 'password',
             inputPlaceholder: 'Masukkan Password SPV',
             inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
@@ -1625,11 +1625,65 @@ LL.Bean,522846,Indigo Ink
 
     function executeSendToServer(line) {
         if(SCRIPT_URL.includes("ISI_DENGAN_LINK")) { fallbackOffline(line, {}); return; }
+        
+        let payload = constructPayload(line);
+        
         let btnSub = document.getElementById('btnSubmitMain');
         btnSub.disabled = true; btnSub.innerHTML = 'MENGIRIM...';
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('loading-text').innerText = "SYNC TO CLOUD...";
 
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
+            
+            if(data.result === "success") { 
+                Swal.fire('Sukses', isAbsentStatus ? 'Laporan ketidakhadiran tersimpan!' : 'Data Finishing berhasil diakumulasikan!', 'success').then(() => { clearAfterSubmit(); }); 
+            } else if(data.result === "duplicate") {
+                // FITUR BARU: WARNING JIKA DATA SUDAH ADA
+                Swal.fire({
+                    title: 'DATA SUDAH ADA!',
+                    html: 'Peringatan: Data dengan kombinasi ini sudah ada di sistem. <b>Mohon teliti kembali dan isi data lainnya jika ada.</b><br><br>Apakah Anda yakin ingin <b>tetap menumpuk/mengakumulasi</b> data ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1e3a8a',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'YA, TETAP KIRIM',
+                    cancelButtonText: 'BATAL'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        payload.force_submit = true;
+                        forceSubmitToServer(payload);
+                    }
+                });
+            } else if(data.error === "VERSION_MISMATCH") {
+                Swal.fire('Versi Usang!', 'Aplikasi yang Anda gunakan sudah usang. Silakan minta file HTML versi terbaru ke SPV Anda.', 'error');
+            } else { Swal.fire('Error', 'Gagal dari server: ' + data.error, 'error'); }
+        }).catch(err => { 
+            document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
+            fallbackOffline(line, payload);
+        });
+    }
+
+    function forceSubmitToServer(payload) {
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loading-text').innerText = "MEMAKSA KIRIM DATA...";
+        
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none';
+            if(data.result === "success") { 
+                Swal.fire('Sukses', 'Data berhasil ditambahkan secara paksa!', 'success').then(() => { clearAfterSubmit(); }); 
+            } else { Swal.fire('Error', 'Gagal dari server: ' + data.error, 'error'); }
+        }).catch(err => {
+            document.getElementById('loading').style.display = 'none';
+            fallbackOffline(payload.line_name, payload);
+        });
+    }
+
+    function constructPayload(line) {
         let defectsArray = [];
         for(let key in activeDefects) {
             let item = activeDefects[key];
@@ -1639,7 +1693,7 @@ LL.Bean,522846,Indigo Ink
         const d = new Date();
         const currentJam = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
-        const payload = {
+        return {
             action: "submit", version: APP_VERSION, nama_qc: document.getElementById('nama_qc').value,
             tanggal: document.getElementById('tanggal').value, jam: currentJam, line_name: line, 
             buyer: document.getElementById('buyer').value || "-", style: document.getElementById('style').value || "-", color: document.getElementById('color').value || "-", 
@@ -1652,22 +1706,9 @@ LL.Bean,522846,Indigo Ink
             pct_def: isAbsentStatus ? "0%" : document.getElementById('pct_def').value, 
             defects: isAbsentStatus ? [] : defectsArray,
             status_absen: isAbsentStatus ? "TIDAK BERANGKAT" : "HADIR",
-            alasan: isAbsentStatus ? absentReasonText : "-"
+            alasan: isAbsentStatus ? absentReasonText : "-",
+            force_submit: false // default false
         };
-
-        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
-            if(data.result === "success") { 
-                Swal.fire('Sukses', isAbsentStatus ? 'Laporan ketidakhadiran tersimpan!' : 'Data Finishing berhasil diakumulasikan!', 'success').then(() => { clearAfterSubmit(); }); 
-            } else if(data.error === "VERSION_MISMATCH") {
-                Swal.fire('Versi Usang!', 'Aplikasi yang Anda gunakan sudah usang. Silakan minta file HTML versi terbaru ke SPV Anda.', 'error');
-            } else { Swal.fire('Error', 'Gagal dari server: ' + data.error, 'error'); }
-        }).catch(err => { 
-            document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
-            fallbackOffline(line, payload);
-        });
     }
 
     function fallbackOffline(line, payload) {
