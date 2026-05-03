@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>USGU DRESS 1 QC FINISHING DASHBOARD v2.0</title>
+    <title>USGU DRESS 1 QC FINISHING DASHBOARD v2.1</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -227,7 +227,7 @@
     <div class="header-content">
         <div class="title-area" onclick="triggerEasterEgg()">
             <div class="main-title">QC FINISHING DASHBOARD</div>
-            <div class="sub-title">QUALITY ENGINEERING USGU DRESS 1 <span class="version-badge" id="verBadge">v2.0</span></div>
+            <div class="sub-title">QUALITY ENGINEERING USGU DRESS 1 <span class="version-badge" id="verBadge">v2.1</span></div>
         </div>
         <img src="logolight.png" class="theme-toggle-logo" id="themeBtn" onclick="toggleTheme()" alt="Mode">
     </div>
@@ -522,7 +522,7 @@
 
     // URL TIDAK DIUBAH SAMA SEKALI
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiwr2m82nWXxX2GLwR6euU7CEVRUjRcQvIwYL6ortrTzGZ6A38aeagzwyNgR_jnyA/exec"; 
-    const APP_VERSION = "2.0"; 
+    const APP_VERSION = "2.1"; 
     document.getElementById('verBadge').innerText = "v" + APP_VERSION;
     
     let defectChart; 
@@ -530,6 +530,26 @@
     let isAbsentStatus = false;
     let absentReasonText = "";
     let currentTrackerData = []; 
+    
+    // --- VARIABEL TAMBAHAN UNTUK LOGIKA BARU ---
+    let lockedDateServer = ""; 
+    
+    // Fungsi baru narik tanggal dari D3 lewat server
+    function fetchLockedDate() {
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "get_locked_date" }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.result === "success" && data.locked_date) {
+                lockedDateServer = data.locked_date;
+                // Opsional: Langsung ngeset tanggal ke tanggal yg di-lock
+                document.getElementById('tanggal').value = lockedDateServer;
+            }
+        }).catch(err => console.log("Info: Mode Offline/Gagal tarik target date."));
+    }
 
     // ========================================================
     // BOTTOM SHEET LOGIC
@@ -1074,7 +1094,6 @@ LL.Bean,522846,Indigo Ink
         });
     }
 
-    // UPDATE: MENGGUNAKAN GRAFIK DOUGHNUT YANG PREMIUM
     function renderTrackerChart(dataVals) {
         const ctx = document.getElementById('trackerAnalyticsChart').getContext('2d');
         if(trackerAnalyticsChart) { trackerAnalyticsChart.destroy(); }
@@ -1412,6 +1431,9 @@ LL.Bean,522846,Indigo Ink
         buildDatabase(); 
         populateBuyerSelect();
         
+        // PANGGIL FUNGSI FETCH TANGGAL DARI SERVER
+        fetchLockedDate();
+        
         const saved = localStorage.getItem('qcAutoSave3_fin'); 
         const savedDefects = localStorage.getItem('qcActiveDefects_fin');
         
@@ -1610,10 +1632,27 @@ LL.Bean,522846,Indigo Ink
         const style = document.getElementById('style').value;
         const color = document.getElementById('color').value;
         const sp = document.getElementById('special_process').value;
+        const inputTanggal = document.getElementById('tanggal').value;
         
         const qty_good = parseInt(document.getElementById('qty_good').value) || 0;
         const t_def = parseInt(document.getElementById('tot_def').value) || 0; 
         const t_insp = qty_good + t_def;
+
+        // --- VALIDASI 1: CEK LOCK TANGGAL DARI SERVER ---
+        if (lockedDateServer && inputTanggal !== lockedDateServer) {
+            Swal.fire('Tanggal Tidak Sesuai Perintah!', `Sistem saat ini hanya menerima data untuk tanggal: <b>${lockedDateServer}</b>. Pastikan tanggal benar seusai perintah!`, 'error');
+            return;
+        }
+
+        // --- VALIDASI 2: CEK DATA KEMBAR BERTURUT-TURUT ---
+        const currentDataSignature = JSON.stringify({
+            buyer: buyer, style: style, color: color, sp: sp, qty_good: qty_good, t_def: t_def, defects: activeDefects
+        });
+
+        if (localStorage.getItem('lastSubmitSignature_fin') === currentDataSignature && !isAbsentStatus) {
+            Swal.fire('Data Ganda Terdeteksi!', 'Kamu tidak bisa mengisi data yang sama persis (Buyer, Style, Color, Qty, dan Defect sama) berturut-turut. Cek kembali!', 'error');
+            return;
+        }
 
         if (!isAbsentStatus) {
             if(!namaQC || line === "-" || !line || !buyer || !style || !color || !sp) { 
@@ -1628,10 +1667,12 @@ LL.Bean,522846,Indigo Ink
                 html: `(Sistem akan menjumlahkan otomatis jika spesifikasi ini sudah ada)<br><br><b>QC:</b> ${namaQC}<br><b>Buyer:</b> ${buyer}<br><b>Line:</b> ${line} | <b>Style:</b> ${style}<br><b>Color:</b> ${color}<br><b>Total Inspect:</b> ${t_insp} pcs<br><b>Total Defect:</b> <span style="color:red; font-weight:bold;">${t_def}</span> pcs<br><b>Total Lulus:</b> <span style="color:green; font-weight:bold;">${qty_good}</span> pcs<br><hr>Kirim ke Server?`,
                 icon: 'question', showCancelButton: true, confirmButtonColor: '#1e3a8a', cancelButtonColor: '#ef4444', confirmButtonText: 'Ya, Kirim!'
             }).then((result) => { 
-                if (result.isConfirmed) { executeSendToServer(line); }
+                if (result.isConfirmed) { 
+                    executeSendToServer(line, currentDataSignature); 
+                }
             });
         } else {
-            executeSendToServer(line);
+            executeSendToServer(line, currentDataSignature);
         }
     }
 
@@ -1641,7 +1682,7 @@ LL.Bean,522846,Indigo Ink
         else { btnSync.style.display = 'none'; }
     }
 
-    function executeSendToServer(line) {
+    function executeSendToServer(line, currentDataSignature) {
         if(SCRIPT_URL.includes("ISI_DENGAN_LINK")) { fallbackOffline(line, {}); return; }
         
         let payload = constructPayload(line);
@@ -1657,9 +1698,11 @@ LL.Bean,522846,Indigo Ink
             document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
             
             if(data.result === "success") { 
+                // SIMPAN SIGNATURE KE LOKAL AGAR TIDAK BISA DI-SPAM BERIKUTNYA
+                localStorage.setItem('lastSubmitSignature_fin', currentDataSignature);
+                
                 Swal.fire('Sukses', isAbsentStatus ? 'Laporan ketidakhadiran tersimpan!' : 'Data Finishing berhasil diakumulasikan!', 'success').then(() => { clearAfterSubmit(); }); 
             } else if(data.result === "duplicate") {
-                // FITUR BARU: WARNING JIKA DATA SUDAH ADA
                 Swal.fire({
                     title: 'DATA SUDAH ADA!',
                     html: 'Peringatan: Data dengan kombinasi ini sudah ada di sistem. <b>Mohon teliti kembali dan isi data lainnya jika ada.</b><br><br>Apakah Anda yakin ingin <b>tetap menumpuk/mengakumulasi</b> data ini?',
@@ -1672,7 +1715,7 @@ LL.Bean,522846,Indigo Ink
                 }).then((result) => {
                     if (result.isConfirmed) {
                         payload.force_submit = true;
-                        forceSubmitToServer(payload);
+                        forceSubmitToServer(payload, currentDataSignature);
                     }
                 });
             } else if(data.error === "VERSION_MISMATCH") {
@@ -1684,7 +1727,7 @@ LL.Bean,522846,Indigo Ink
         });
     }
 
-    function forceSubmitToServer(payload) {
+    function forceSubmitToServer(payload, currentDataSignature) {
         document.getElementById('loading').style.display = 'flex';
         document.getElementById('loading-text').innerText = "MEMAKSA KIRIM DATA...";
         
@@ -1693,6 +1736,7 @@ LL.Bean,522846,Indigo Ink
         .then(data => {
             document.getElementById('loading').style.display = 'none';
             if(data.result === "success") { 
+                localStorage.setItem('lastSubmitSignature_fin', currentDataSignature);
                 Swal.fire('Sukses', 'Data berhasil ditambahkan secara paksa!', 'success').then(() => { clearAfterSubmit(); }); 
             } else { Swal.fire('Error', 'Gagal dari server: ' + data.error, 'error'); }
         }).catch(err => {
