@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>USGU DRESS 1 QC FINISHING DASHBOARD v2.1</title>
+    <title>USGU DRESS 1 QC FINISHING DASHBOARD v2.1.1</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -227,7 +227,7 @@
     <div class="header-content">
         <div class="title-area" onclick="triggerEasterEgg()">
             <div class="main-title">QC FINISHING DASHBOARD</div>
-            <div class="sub-title">QUALITY ENGINEERING USGU DRESS 1 <span class="version-badge" id="verBadge">v2.1</span></div>
+            <div class="sub-title">QUALITY ENGINEERING USGU DRESS 1 <span class="version-badge" id="verBadge">v2.1.1</span></div>
         </div>
         <img src="logolight.png" class="theme-toggle-logo" id="themeBtn" onclick="toggleTheme()" alt="Mode">
     </div>
@@ -495,10 +495,10 @@
 <div id="actionSheet" class="sheet-overlay" onclick="closeActionSheet(event)">
     <div class="bottom-sheet" onclick="event.stopPropagation()">
         <div class="sheet-handle"></div>
-        <button class="sheet-btn" style="color: var(--danger);" onclick="runAction(markAbsent)">TIDAK BERANGKAT</button>
+        <button class="sheet-btn" style="color: var(--danger);" onclick="runAction(openAbsenMenu)">MENU ABSEN</button>
         <button class="sheet-btn" onclick="runAction(resetForm)">RESET FORMULIR</button>
-        <button class="sheet-btn" onclick="runAction(exportToExcel)">DOWNLOAD EXCEL</button>
-        <button class="sheet-btn" style="color: var(--primary);" onclick="runAction(recapSPV)">REVIEW & TUTUP SHIFT (SPV)</button>
+        <button class="sheet-btn" onclick="runAction(exportToExcel)">DOWNLOAD DATA LOKAL</button>
+        <button class="sheet-btn" style="color: var(--primary);" onclick="runAction(openMenuSPV)">MENU SUPERVISOR (SPV)</button>
     </div>
 </div>
 
@@ -522,19 +522,17 @@
 
     // URL TIDAK DIUBAH SAMA SEKALI
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiwr2m82nWXxX2GLwR6euU7CEVRUjRcQvIwYL6ortrTzGZ6A38aeagzwyNgR_jnyA/exec"; 
-    const APP_VERSION = "2.1"; 
+    const APP_VERSION = "2.1.1"; 
     document.getElementById('verBadge').innerText = "v" + APP_VERSION;
     
     let defectChart; 
     let trackerAnalyticsChart;
-    let isAbsentStatus = false;
+    let specialStatus = ""; // "" | "TIDAK BERANGKAT" | "BALANCING PROCESS"
     let absentReasonText = "";
     let currentTrackerData = []; 
     
-    // --- VARIABEL TAMBAHAN UNTUK LOGIKA BARU ---
     let lockedDateServer = ""; 
     
-    // Fungsi baru narik tanggal dari D3 lewat server
     function fetchLockedDate() {
         fetch(SCRIPT_URL, {
             method: 'POST',
@@ -545,7 +543,6 @@
         .then(data => {
             if(data.result === "success" && data.locked_date) {
                 lockedDateServer = data.locked_date;
-                // Opsional: Langsung ngeset tanggal ke tanggal yg di-lock
                 document.getElementById('tanggal').value = lockedDateServer;
             }
         }).catch(err => console.log("Info: Mode Offline/Gagal tarik target date."));
@@ -611,6 +608,150 @@
         document.getElementById('btn-tab-tracker').classList.add('active');
         document.getElementById('bottomActionBar').style.display = 'none';
         initTrackerFilters();
+    }
+
+    // ========================================================
+    // FITUR MENU SPV BARU (DILINDUNGI PASSWORD & MODAL EKSKLUSIF)
+    // ========================================================
+    function openMenuSPV() {
+        Swal.fire({
+            title: 'OTORISASI SPV',
+            input: 'password',
+            inputPlaceholder: 'Masukkan Password SPV',
+            inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
+            showCancelButton: true,
+            confirmButtonColor: '#1e3a8a',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'MASUK',
+            cancelButtonText: 'BATAL'
+        }).then((result) => {
+            if(result.isConfirmed) {
+                if(result.value === 'FIND1') { 
+                    showSPVDashboard(); 
+                } else { 
+                    Swal.fire('Akses Ditolak', 'Password salah atau tidak valid.', 'error'); 
+                }
+            }
+        });
+    }
+
+    function showSPVDashboard() {
+        Swal.fire({
+            title: 'MENU SUPERVISOR',
+            html: `
+                <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+                    <button onclick="Swal.close(); setTimeout(fetchPreviewDashboard, 300);" style="background:var(--primary); color:white; border:none; padding:16px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        REVIEW & TUTUP SHIFT
+                    </button>
+                    <button onclick="Swal.close(); setTimeout(openReportModal, 300);" style="background:var(--success); color:white; border:none; padding:16px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:var(--shadow-sm); display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        GENERATE REPORT EXCEL
+                    </button>
+                </div>
+            `,
+            showConfirmButton: false,
+            showCancelButton: true,
+            cancelButtonText: 'TUTUP'
+        });
+    }
+
+    function openReportModal() {
+        Swal.fire({
+            title: 'GENERATE EXPORT EXCEL',
+            html: `
+                <div style="text-align:left; font-size:11px; font-weight:bold; color:var(--text-main);">
+                    <label style="color:var(--primary);">TIPE LAPORAN:</label>
+                    <select id="swal-rep-type" class="swal2-select" style="display:flex; width:100%; margin: 5px 0 15px; font-size:13px; padding:10px; border-radius:8px; box-sizing:border-box;">
+                        <option value="daily">DAILY (Harian)</option>
+                        <option value="weekly">WEEKLY (Mingguan)</option>
+                        <option value="monthly">MONTHLY (Bulanan)</option>
+                        <option value="yearly">YEARLY (Tahunan)</option>
+                    </select>
+
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <div style="flex:1;">
+                            <label style="color:var(--primary);">DARI TANGGAL:</label>
+                            <input type="date" id="swal-rep-start" class="swal2-input" style="margin:5px 0 0; width:100%; height:40px; font-size:13px; border-radius:8px; box-sizing:border-box;">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="color:var(--primary);">SAMPAI TANGGAL:</label>
+                            <input type="date" id="swal-rep-end" class="swal2-input" style="margin:5px 0 0; width:100%; height:40px; font-size:13px; border-radius:8px; box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <label style="color:var(--primary);">SUMBER DATA EXPORT:</label>
+                    <select id="swal-rep-source" class="swal2-select" style="display:flex; width:100%; margin: 5px 0 15px; font-size:13px; padding:10px; border-radius:8px; box-sizing:border-box;">
+                        <option value="original">ORIGINAL (Data Asli / Mentah)</option>
+                        <option value="review">REVIEW (Data Sesudah Di-Review SPV)</option>
+                    </select>
+
+                    <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; background:var(--bg-section); padding:12px; border-radius:8px; border:1px solid var(--border-line); margin-top:5px;">
+                        <input type="checkbox" id="swal-rep-db" style="width:18px; height:18px; accent-color:var(--primary); margin-top:2px;">
+                        <span style="line-height:1.4;">Sertakan File <b>DATABASE</b> & <b>DB_DEFECTS</b> utuh ke dalam Export (Untuk Kebutuhan Charting Lanjutan)</span>
+                    </label>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'GENERATE REPORT',
+            cancelButtonText: 'BATAL',
+            preConfirm: () => {
+                let start = document.getElementById('swal-rep-start').value;
+                let end = document.getElementById('swal-rep-end').value;
+                if(!start || !end) { Swal.showValidationMessage('Tentukan Dari Tanggal dan Sampai Tanggal!'); return false; }
+                if(start > end) { Swal.showValidationMessage('Tanggal Mulai tidak boleh lebih besar dari Tanggal Akhir!'); return false; }
+                return {
+                    type: document.getElementById('swal-rep-type').value,
+                    start_date: start,
+                    end_date: end,
+                    source: document.getElementById('swal-rep-source').value,
+                    include_db: document.getElementById('swal-rep-db').checked
+                };
+            }
+        }).then((result) => {
+            if(result.isConfirmed) {
+                executeGenerateReport(result.value);
+            }
+        });
+    }
+
+    function executeGenerateReport(config) {
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loading-text').innerText = "MENYUSUN EXCEL DI SERVER...";
+
+        const payload = { 
+            action: "generate_report", 
+            password: "FIND1",
+            report_type: config.type,
+            start_date: config.start_date,
+            end_date: config.end_date,
+            data_source: config.source,
+            include_db: config.include_db
+        };
+
+        fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=utf-8' }})
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('loading').style.display = 'none';
+            if(data.result === "success" && data.exportUrl) {
+                Swal.fire({
+                    title: 'REPORT BERHASIL DIBUAT!',
+                    text: 'File Excel Summary Report sudah siap untuk diunduh.',
+                    icon: 'success',
+                    confirmButtonText: 'DOWNLOAD EXCEL',
+                    confirmButtonColor: '#10b981'
+                }).then(() => {
+                    window.open(data.exportUrl, '_blank');
+                });
+            } else { 
+                Swal.fire('Error', data.error || 'Gagal generate report.', 'error'); 
+            }
+        }).catch(err => { 
+            document.getElementById('loading').style.display = 'none'; 
+            Swal.fire('Gagal Koneksi', 'Pastikan internet stabil saat menarik ribuan data.', 'error');
+        });
     }
 
     // ========================================================
@@ -1069,7 +1210,6 @@ LL.Bean,522846,Indigo Ink
                     tbody.innerHTML += `<tr><td>${d.tanggal}</td><td>${qcLabel}</td><td>${d.line}</td><td>${d.buyer}</td><td>${d.style}</td><td>${d.color}</td><td style="font-weight:bold;">${d.insp}</td><td style="color:var(--danger); font-weight:bold;">${d.def}</td><td style="color:var(--success); font-weight:bold;">${d.good}</td><td>${d.pct}</td></tr>`;
                 });
                 
-                // MENGUPDATE TEKS ANALITIK SEBELUM RENDER CHART
                 let overallPctStr = totalInsp > 0 ? ((totalDef / totalInsp) * 100).toFixed(1) + "%" : "0%";
                 let goodPctStr = totalInsp > 0 ? ((totalGood / totalInsp) * 100).toFixed(1) + "%" : "0%";
 
@@ -1432,7 +1572,6 @@ LL.Bean,522846,Indigo Ink
         buildDatabase(); 
         populateBuyerSelect();
         
-        // PANGGIL FUNGSI FETCH TANGGAL DARI SERVER
         fetchLockedDate();
         
         const saved = localStorage.getItem('qcAutoSave3_fin'); 
@@ -1482,55 +1621,54 @@ LL.Bean,522846,Indigo Ink
     // ========================================================
     // MAIN SUBMISSIONS
     // ========================================================
-    function markAbsent() {
+    function openAbsenMenu() {
         const namaQC = document.getElementById('nama_qc').value;
-
         if(!namaQC) {
             Swal.fire('Perhatian', 'Pilih Nama QC terlebih dahulu sebelum absen!', 'warning');
             return;
         }
 
         Swal.fire({
-            title: 'TIDAK BERANGKAT',
-            input: 'textarea',
-            inputLabel: 'Alasan Tidak Berangkat',
-            inputPlaceholder: 'Ketik alasan di sini (Sakit, Izin, Cuti, dll)...',
+            title: 'PILIH JENIS ABSEN',
+            html: `
+                <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+                    <button onclick="Swal.close(); setTimeout(() => processAbsen('TIDAK BERANGKAT'), 300);" style="background:var(--danger); color:white; border:none; padding:16px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:var(--shadow-sm);">
+                        TIDAK BERANGKAT
+                    </button>
+                    <button onclick="Swal.close(); setTimeout(() => processAbsen('BALANCING PROCESS'), 300);" style="background:var(--accent); color:var(--text-brand); border:none; padding:16px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; box-shadow:var(--shadow-sm);">
+                        BALANCING PROCESS
+                    </button>
+                </div>
+            `,
+            showConfirmButton: false,
             showCancelButton: true,
-            confirmButtonColor: '#ef4444',
+            cancelButtonText: 'BATAL'
+        });
+    }
+
+    function processAbsen(type) {
+        let titleText = type === 'TIDAK BERANGKAT' ? 'TIDAK BERANGKAT' : 'BALANCING PROCESS';
+        let phText = type === 'TIDAK BERANGKAT' ? 'Ketik alasan di sini (Sakit, Izin, Cuti, dll)...' : 'Ketik keterangan pindah support ke mana...';
+
+        Swal.fire({
+            title: titleText,
+            input: 'textarea',
+            inputLabel: 'Keterangan',
+            inputPlaceholder: phText,
+            showCancelButton: true,
+            confirmButtonColor: type === 'TIDAK BERANGKAT' ? '#ef4444' : '#f59e0b',
             cancelButtonColor: '#64748b',
-            confirmButtonText: 'KIRIM ABSEN',
+            confirmButtonText: 'KIRIM',
             cancelButtonText: 'BATAL',
             preConfirm: (text) => {
-                if (!text) { Swal.showValidationMessage('Alasan wajib diisi!'); }
+                if (!text) { Swal.showValidationMessage('Keterangan wajib diisi!'); }
                 return text;
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                isAbsentStatus = true;
+                specialStatus = type; 
                 absentReasonText = result.value;
                 showSummaryAndSubmit(); 
-            }
-        });
-    }
-
-    function recapSPV() {
-        Swal.fire({
-            title: 'PASSWORD',
-            input: 'password',
-            inputPlaceholder: 'Masukkan Password SPV',
-            inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
-            showCancelButton: true,
-            confirmButtonColor: '#1e3a8a',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'LANJUTKAN',
-            cancelButtonText: 'BATAL'
-        }).then((result) => {
-            if(result.isConfirmed) {
-                if(result.value === 'FIND1') { 
-                    fetchPreviewDashboard(); 
-                } else { 
-                    Swal.fire('Akses Ditolak', 'Password salah atau tidak valid.', 'error'); 
-                }
             }
         });
     }
@@ -1639,23 +1777,21 @@ LL.Bean,522846,Indigo Ink
         const t_def = parseInt(document.getElementById('tot_def').value) || 0; 
         const t_insp = qty_good + t_def;
 
-        // --- VALIDASI 1: CEK LOCK TANGGAL DARI SERVER ---
         if (lockedDateServer && inputTanggal !== lockedDateServer) {
             Swal.fire('Tanggal Tidak Sesuai Perintah!', `Sistem saat ini hanya menerima data untuk tanggal: <b>${lockedDateServer}</b>. Pastikan tanggal benar seusai perintah!`, 'error');
             return;
         }
 
-        // --- VALIDASI 2: CEK DATA KEMBAR BERTURUT-TURUT ---
         const currentDataSignature = JSON.stringify({
             buyer: buyer, style: style, color: color, sp: sp, qty_good: qty_good, t_def: t_def, defects: activeDefects
         });
 
-        if (localStorage.getItem('lastSubmitSignature_fin') === currentDataSignature && !isAbsentStatus) {
+        if (localStorage.getItem('lastSubmitSignature_fin') === currentDataSignature && specialStatus === "") {
             Swal.fire('Data Ganda Terdeteksi!', 'Kamu tidak bisa mengisi data yang sama persis (Buyer, Style, Color, Qty, dan Defect sama) berturut-turut. Cek kembali!', 'error');
             return;
         }
 
-        if (!isAbsentStatus) {
+        if (specialStatus === "") {
             if(!namaQC || line === "-" || !line || !buyer || !style || !color || !sp) { 
                 Swal.fire('Perhatian', 'Semua kolom (NAMA QC, BUYER, LINE, SPESIAL PROSES, STYLE, COLOR) wajib diisi!', 'warning'); return; 
             }
@@ -1699,10 +1835,8 @@ LL.Bean,522846,Indigo Ink
             document.getElementById('loading').style.display = 'none'; btnSub.disabled = false; btnSub.innerHTML = 'CONFIRM & SUBMIT';
             
             if(data.result === "success") { 
-                // SIMPAN SIGNATURE KE LOKAL AGAR TIDAK BISA DI-SPAM BERIKUTNYA
                 localStorage.setItem('lastSubmitSignature_fin', currentDataSignature);
-                
-                Swal.fire('Sukses', isAbsentStatus ? 'Laporan ketidakhadiran tersimpan!' : 'Data Finishing berhasil diakumulasikan!', 'success').then(() => { clearAfterSubmit(); }); 
+                Swal.fire('Sukses', specialStatus !== "" ? `Laporan ${specialStatus.toLowerCase()} tersimpan!` : 'Data Finishing berhasil diakumulasikan!', 'success').then(() => { clearAfterSubmit(); }); 
             } else if(data.result === "duplicate") {
                 Swal.fire({
                     title: 'DATA SUDAH ADA!',
@@ -1763,13 +1897,13 @@ LL.Bean,522846,Indigo Ink
             special_process: document.getElementById('special_process').value || "-", shift_start: document.getElementById('shift_start').value, 
             shift_end: document.getElementById('shift_end').value, jam_istirahat: document.getElementById('jam_istirahat').value,
             
-            qty_good: isAbsentStatus ? 0 : document.getElementById('qty_good').value, 
-            qty_insp: isAbsentStatus ? 0 : document.getElementById('qty_insp').value,
-            tot_def: isAbsentStatus ? 0 : document.getElementById('tot_def').value, 
-            pct_def: isAbsentStatus ? "0%" : document.getElementById('pct_def').value, 
-            defects: isAbsentStatus ? [] : defectsArray,
-            status_absen: isAbsentStatus ? "TIDAK BERANGKAT" : "HADIR",
-            alasan: isAbsentStatus ? absentReasonText : "-",
+            qty_good: specialStatus !== "" ? 0 : document.getElementById('qty_good').value, 
+            qty_insp: specialStatus !== "" ? 0 : document.getElementById('qty_insp').value,
+            tot_def: specialStatus !== "" ? 0 : document.getElementById('tot_def').value, 
+            pct_def: specialStatus !== "" ? "0%" : document.getElementById('pct_def').value, 
+            defects: specialStatus !== "" ? [] : defectsArray,
+            status_absen: specialStatus !== "" ? specialStatus : "HADIR",
+            alasan: specialStatus !== "" ? absentReasonText : "-",
             force_submit: false // default false
         };
     }
@@ -1781,7 +1915,7 @@ LL.Bean,522846,Indigo Ink
     }
 
     function clearAfterSubmit() {
-        isAbsentStatus = false; absentReasonText = "";
+        specialStatus = ""; absentReasonText = "";
         activeDefects = {}; renderDefectList();
         ['style','color','qty_good'].forEach(id => { document.getElementById(id).value = ""; });
         calculate(); populateBuyerSelect(); updateDropdowns('buyer'); saveData();
